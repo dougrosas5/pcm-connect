@@ -1,14 +1,24 @@
-* {
-  box-sizing: border-box;   
-}
-
-body {
-  margin: 0;
+:root {
+  --grafito: #262626;
+  --fondo: #e9e9e6;
+  --acento: #b65b47;
+  --texto-secundario: #777774;
+  /* Variante más oscura para texto pequeño sobre el fondo Graphite. */
+  --texto-secundario-legible: #62625f;
+  --superficie: #ffffff;
+  --borde: #ccccc7;
   font-family: Arial, Helvetica, sans-serif;
-  background-color: #f5f7fa;
-  color: #1e293b
+  color: var(--grafito);
+  background: var(--fondo);
 }
 
-button {
-  cursor: pointer;
-}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; min-height: 44px; font-size: 14px; }
+input, textarea { border: 1px solid #888884; border-radius: 4px; padding: 9px 10px; color: var(--grafito); background: var(--superficie); min-height: 44px; }
+input[aria-invalid='true'] { border-color: #913b2b; }
+textarea::placeholder { color: var(--texto-secundario-legible); }
+:focus-visible { outline: 2px solid var(--grafito); outline-offset: 3px; }
+.sidebar :focus-visible { outline-color: #e9a08b; }
+::selection { background: var(--grafito); color: var(--superficie); }

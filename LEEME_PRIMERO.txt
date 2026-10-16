@@ -1,0 +1,24 @@
+PCM CONNECT — KIT PARA CODEX (VS CODE / WINDOWS)
+==================================================
+
+Este ZIP contiene instrucciones y skills ADAPTADAS para PCM Connect.
+No contiene ni reemplaza la carpeta src, App.tsx, App.css ni el código de tu aplicación.
+
+1. Abrí en VS Code la carpeta raíz de tu proyecto (la carpeta que contiene package.json y src).
+2. Hacé antes un commit de seguridad en Git (ej.: git status; git add .; git commit -m "Respaldo antes de Codex"). No hagas push si todavía no querés.
+3. Descargá este ZIP y extraé su contenido DENTRO de la raíz de tu proyecto. Deben verse AGENTS.md, docs/, .agents/skills/ y PROMPT_INICIAL_CODEX.md al mismo nivel de package.json.
+4. Windows puede ocultar carpetas que empiezan con punto. VS Code sí debe mostrar .agents. Verificá que .agents/skills/*/SKILL.md exista.
+5. Abrí Codex (extensión oficial) en VS Code, seleccioná trabajo local / Agent y modelo GPT-6 Astra en High si está disponible.
+6. Copiá el texto de PROMPT_INICIAL_CODEX.md en el chat de Codex y envialo.
+7. Revisá los cambios en diff y ejecutá npm run dev; probá la búsqueda múltiple de tareas y filas por OM.
+8. Si Codex no descubre las nuevas skills de inmediato, cerrá y volvé a abrir la sesión de Codex o recargá VS Code.
+
+IMPORTANTE: La carpeta .agents/skills contiene selecciones y adaptaciones de las 4 fuentes originales:
+- awesome-design-md-main(2).zip -> 3 DESIGN.md de referencia y skill de principios.
+- taste-skill-main(2).zip -> skill operativa adaptada + referencia original.
+- impeccable-main(2).zip -> skill operativa adaptada + guías de revisión relevantes.
+- playwright-main(2).zip -> skill local de testeo + notas de instalación; NO incluye el código fuente de Playwright.
+
+Razón: los ZIP originales incluyen un monorepo completo o instrucciones de marketing no adecuadas para un panel operacional. No se instala automáticamente nada y no se ejecutan scripts ajenos.
+
+Si tu repositorio YA tiene un AGENTS.md o una carpeta .agents, compará y fusioná con cuidado antes de sobrescribir.
