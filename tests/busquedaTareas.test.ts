@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { tareasDemo } from '../src/data/tareas.ts'
-import { buscarTareas, errorPersonas, errorResponsable } from '../src/features/busquedaTareas.ts'
+import { responsablesPreparacion, tareasDemo } from '../src/data/tareas.ts'
+import { agruparPorTarea, buscarTareas, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../src/features/busquedaTareas.ts'
 
 test('separa comas, espacios y saltos de línea, preservando ceros y guiones', () => {
   const resultado = buscarTareas('1001,\t1003\n0010-A', tareasDemo, [])
@@ -33,7 +33,7 @@ test('repetir IDs o búsquedas conserva las ediciones independientes por OM', ()
   const primera = buscarTareas('1001,1001', tareasDemo, [])
   assert.equal(primera.filas.length, 2)
   assert.ok(primera.avisos.some(aviso => aviso.includes('ID repetido')))
-  const editadas = primera.filas.map((fila, indice) => ({ ...fila, responsable: `Demo ${indice}`, personas: String(indice + 2) }))
+  const editadas = primera.filas.map((fila, indice) => ({ ...fila, duracionPrevista: String(indice + 0.75), responsable: responsablesPreparacion[indice], personas: String(indice + 2) }))
   const segunda = buscarTareas('1001 1003', tareasDemo, editadas)
   assert.equal(segunda.filas.length, 3)
   assert.deepEqual(segunda.filas.slice(0, 2), editadas)
@@ -55,10 +55,79 @@ test('una tarea abierta sin OM informa un estado vacío', () => {
 })
 
 test('responsable obligatorio y personas enteras positivas', () => {
-  for (const valor of ['', '   ', 'a'.repeat(101)]) assert.notEqual(errorResponsable(valor), '')
-  assert.equal(errorResponsable(' Responsable ficticio '), '')
+  for (const valor of ['', '   ', 'a'.repeat(101), 'Otro responsable', 'douglas']) assert.notEqual(errorResponsable(valor), '')
+  for (const valor of ['Douglas', 'Ale', 'Pepe']) assert.equal(errorResponsable(valor), '')
   for (const valor of ['', ' ', '0', '-1', '1.5', 'abc', '1e2', 'Infinity', '9007199254740992']) {
     assert.notEqual(errorPersonas(valor), '', valor)
   }
   for (const valor of ['1', '2', '10']) assert.equal(errorPersonas(valor), '')
+})
+
+test('recupera descripción, duración y costo por OM sin convertir área en responsable', () => {
+  const { filas } = buscarTareas('1001 1003 0010-A', tareasDemo, [])
+  assert.deepEqual(filas.map(fila => fila.duracionPrevista), ['3', '2', '1.5', '4'])
+  assert.deepEqual(filas.map(fila => fila.costo), [370000, 350000, 250000, 450000])
+  assert.notEqual(filas[0].descripcion, filas[1].descripcion)
+  for (const fila of filas) {
+    const tarea = tareasDemo.find(tarea => tarea.numero === fila.tarea)!
+    const original = tarea.ordenesMantenimiento.find(om => om.numero === fila.numero)!
+    assert.equal(fila.descripcion, original.descripcion)
+    assert.ok(fila.descripcion.length > 0)
+    assert.equal(fila.area, tarea.area)
+    assert.equal(fila.responsable, '')
+  }
+})
+
+test('editar duración del borrador no cambia la base ni otra OM y se conserva al buscar de nuevo', () => {
+  const baseOriginal = structuredClone(tareasDemo)
+  const { filas } = buscarTareas('1001', tareasDemo, [])
+  filas[0].duracionPrevista = '4.25'
+  filas[0].responsable = 'Douglas'
+  const repetida = buscarTareas('1001 1003', tareasDemo, filas)
+  assert.equal(repetida.filas[0].duracionPrevista, '4.25')
+  assert.equal(repetida.filas[1].duracionPrevista, '2')
+  assert.equal(repetida.filas[2].duracionPrevista, '1.5')
+  assert.equal(repetida.filas[0].horasPrevistas, 3)
+  assert.deepEqual(tareasDemo, baseOriginal)
+})
+
+test('duración obligatoria, finita y positiva; admite decimales', () => {
+  for (const valor of ['', ' ', '0', '0.0', '-1', '-0.5', 'abc', 'Infinity', 'NaN', '1e309']) {
+    assert.notEqual(errorDuracion(valor), '', valor)
+  }
+  for (const valor of ['1', '0.25', '1.5', '4.75', '100']) assert.equal(errorDuracion(valor), '', valor)
+})
+
+test('agrupa tareas aunque sus OM lleguen separadas y mantiene orden e independencia', () => {
+  const { filas } = buscarTareas('1001 1003', tareasDemo, [])
+  const grupos = agruparPorTarea([filas[0], filas[2], filas[1]])
+  assert.deepEqual(grupos.map(grupo => grupo.tarea), ['1001', '1003'])
+  assert.deepEqual(grupos[0].ordenes.map(fila => fila.numero), ['OM-001', 'OM-002'])
+  assert.equal(grupos[0].ordenes.length, 2)
+  assert.equal(grupos[1].ordenes.length, 1)
+  assert.equal(grupos[0].ordenes[0], filas[0])
+  assert.equal(grupos[0].ordenes[1], filas[1])
+  assert.deepEqual(agruparPorTarea([]), [])
+})
+
+test('suma costos por OM incorporada, excluye cerradas y no suma duplicados', () => {
+  const primera = buscarTareas('1001', tareasDemo, [])
+  assert.deepEqual(resumirCostos(primera.filas), { subtotal: 720000, sinDefinir: 0 })
+  const segunda = buscarTareas('1001 1002 1003 1004', tareasDemo, primera.filas)
+  assert.deepEqual(resumirCostos(segunda.filas), { subtotal: 970000, sinDefinir: 0 })
+  const todas = buscarTareas('0010-A', tareasDemo, segunda.filas)
+  assert.deepEqual(resumirCostos(todas.filas), { subtotal: 1420000, sinDefinir: 0 })
+  assert.equal(resumirCostos(segunda.filas.map(fila => ({ ...fila, costo: 0.1 }))).subtotal, 0.3)
+})
+
+test('los costos faltantes dejan el total pendiente y un cero explícito sigue siendo conocido', () => {
+  const baseSinCosto = tareasDemo.map(tarea => tarea.numero === '0010-A'
+    ? { ...tarea, ordenesMantenimiento: tarea.ordenesMantenimiento.map(om => ({ ...om, costo: undefined })) }
+    : tarea)
+  const desconocido = buscarTareas('0010-A', baseSinCosto, [])
+  assert.deepEqual(resumirCostos(desconocido.filas), { subtotal: undefined, sinDefinir: 1 })
+  const mixto = buscarTareas('1001', tareasDemo, desconocido.filas)
+  assert.deepEqual(resumirCostos(mixto.filas), { subtotal: 720000, sinDefinir: 1 })
+  assert.deepEqual(resumirCostos([]), { subtotal: undefined, sinDefinir: 0 })
+  assert.deepEqual(resumirCostos([{ ...desconocido.filas[0], costo: 0 }]), { subtotal: 0, sinDefinir: 0 })
 })

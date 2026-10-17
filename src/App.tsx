@@ -37,7 +37,7 @@ function App() {
         {paginaActual === 'Planificación' && (
           <>
             <p>Organización de tareas y recursos de mantenimiento.</p>
-            <button className="boton-primario" onClick={() => setPaginaActual('Tareas')}>Buscar tareas y OM</button>
+            <button className="boton-primario" onClick={() => setPaginaActual('Tareas')}>Búsqueda de tareas</button>
           </>
         )}
         {/* Se mantiene montado para conservar el borrador al cambiar de pantalla. */}

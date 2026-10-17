@@ -1,8 +1,11 @@
 import type { OrdenMantenimiento, Tarea } from '../data/tareas.ts'
+import { responsablesPreparacion } from '../data/tareas.ts'
 
 export type FilaOM = OrdenMantenimiento & {
   tarea: string
   area: string
+  // Texto editable para permitir vaciar el input y mostrar errores sin perder el original.
+  duracionPrevista: string
   responsable: string
   personas: string
 }
@@ -47,7 +50,7 @@ export function buscarTareas(entrada: string, base: Tarea[], actuales: FilaOM[])
         avisos.push(`Tarea ${id}: ${om.numero} ya está en la tabla; se conservaron sus datos.`)
         continue
       }
-      filas.push({ ...om, tarea: id, area: tarea.area, responsable: '', personas: '1' })
+      filas.push({ ...om, tarea: id, area: tarea.area, duracionPrevista: String(om.horasPrevistas), responsable: '', personas: '1' })
       omIncluidas.add(om.numero)
     }
   }
@@ -56,11 +59,41 @@ export function buscarTareas(entrada: string, base: Tarea[], actuales: FilaOM[])
 }
 
 export function errorResponsable(valor: string) {
-  return valor.trim().length === 0 ? 'Ingresá un responsable.'
-    : valor.trim().length > 100 ? 'Usá hasta 100 caracteres.' : ''
+  return responsablesPreparacion.some(responsable => responsable === valor)
+    ? '' : 'Seleccioná Douglas, Ale o Pepe.'
 }
 
 export function errorPersonas(valor: string) {
   return !/^\d+$/u.test(valor) || !Number.isSafeInteger(Number(valor)) || Number(valor) < 1
     ? 'Ingresá un número entero mayor o igual a 1.' : ''
+}
+
+export function errorDuracion(valor: string) {
+  return valor.trim() === '' || !Number.isFinite(Number(valor)) || Number(valor) <= 0
+    ? 'Ingresá una duración mayor que 0; admite decimales.' : ''
+}
+
+// Los grupos son solo de presentación: cada OM conserva su fila y su estado.
+export function agruparPorTarea(filas: FilaOM[]) {
+  const grupos = new Map<string, FilaOM[]>()
+  for (const fila of filas) {
+    const grupo = grupos.get(fila.tarea)
+    if (grupo) grupo.push(fila)
+    else grupos.set(fila.tarea, [fila])
+  }
+  return Array.from(grupos, ([tarea, ordenes]) => ({ tarea, ordenes }))
+}
+
+export function resumirCostos(filas: FilaOM[]) {
+  let subtotal: number | undefined
+  let sinDefinir = 0
+  for (const fila of filas) {
+    if (fila.costo === undefined) sinDefinir += 1
+    else subtotal = (subtotal ?? 0) + fila.costo
+  }
+  return {
+    // Sin costos conocidos, el subtotal queda indefinido: no representa un cero real.
+    subtotal: subtotal === undefined ? undefined : Math.round(subtotal * 100) / 100,
+    sinDefinir,
+  }
 }

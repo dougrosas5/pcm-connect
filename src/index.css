@@ -14,10 +14,10 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
-button, input, textarea { font: inherit; }
+button, input, textarea, select { font: inherit; }
 button { cursor: pointer; min-height: 44px; font-size: 14px; }
-input, textarea { border: 1px solid #888884; border-radius: 4px; padding: 9px 10px; color: var(--grafito); background: var(--superficie); min-height: 44px; }
-input[aria-invalid='true'] { border-color: #913b2b; }
+input, textarea, select { border: 1px solid #888884; border-radius: 4px; padding: 9px 10px; color: var(--grafito); background: var(--superficie); min-height: 44px; }
+input[aria-invalid='true'], select[aria-invalid='true'] { border-color: #913b2b; }
 textarea::placeholder { color: var(--texto-secundario-legible); }
 :focus-visible { outline: 2px solid var(--grafito); outline-offset: 3px; }
 .sidebar :focus-visible { outline-color: #e9a08b; }

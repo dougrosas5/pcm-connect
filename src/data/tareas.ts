@@ -1,11 +1,15 @@
 type Estado = 'Abierta' | 'Cerrada'
 
+export const responsablesPreparacion = ['Douglas', 'Ale', 'Pepe'] as const
+
 export type OrdenMantenimiento = {
   numero: string
+  descripcion: string
   estado: Estado
   horasPrevistas: number
   criticidad?: 'Baja' | 'Media' | 'Alta'
-  costo?: string
+  // Guaraníes (PYG); ausente significa costo desconocido, no cero.
+  costo?: number
 }
 
 export type Tarea = {
@@ -17,37 +21,39 @@ export type Tarea = {
 
 // Datos totalmente ficticios. Duraciones por OM solo para esta demo;
 // no representan horas-persona ni una regla del sistema corporativo.
+// Costos referenciales en guaraníes (PYG), no cotizaciones de las OM ficticias.
+// Fuentes y supuestos: docs/COSTOS_ESTIMADOS_PYG.md (17/10/2026).
 export const tareasDemo: Tarea[] = [
   {
     numero: '1001', area: 'Taller mecánico', estado: 'Abierta',
     ordenesMantenimiento: [
-      { numero: 'OM-001', estado: 'Abierta', horasPrevistas: 3 },
-      { numero: 'OM-002', estado: 'Abierta', horasPrevistas: 2 },
+      { numero: 'OM-001', descripcion: 'Reemplazar sello de bomba auxiliar', estado: 'Abierta', horasPrevistas: 3, costo: 370000 },
+      { numero: 'OM-002', descripcion: 'Alinear acoplamiento del motor', estado: 'Abierta', horasPrevistas: 2, costo: 350000 },
     ],
   },
   {
     numero: '1002', area: 'Taller mecánico', estado: 'Cerrada',
     ordenesMantenimiento: [
-      { numero: 'OM-003', estado: 'Cerrada', horasPrevistas: 2 },
+      { numero: 'OM-003', descripcion: 'Inspeccionar rodamientos del ventilador', estado: 'Cerrada', horasPrevistas: 2, costo: 220000 },
     ],
   },
   {
     numero: '1003', area: 'Taller eléctrico', estado: 'Abierta',
     ordenesMantenimiento: [
-      { numero: 'OM-004', estado: 'Abierta', horasPrevistas: 1.5 },
-      { numero: 'OM-005', estado: 'Cerrada', horasPrevistas: 2 },
+      { numero: 'OM-004', descripcion: 'Verificar protecciones del tablero eléctrico', estado: 'Abierta', horasPrevistas: 1.5, costo: 250000 },
+      { numero: 'OM-005', descripcion: 'Cambiar contactor del circuito auxiliar', estado: 'Cerrada', horasPrevistas: 2, costo: 320000 },
     ],
   },
   {
     numero: '1004', area: 'Instrumentación', estado: 'Abierta',
     ordenesMantenimiento: [
-      { numero: 'OM-006', estado: 'Cerrada', horasPrevistas: 1 },
+      { numero: 'OM-006', descripcion: 'Calibrar transmisor de presión', estado: 'Cerrada', horasPrevistas: 1, costo: 250000 },
     ],
   },
   {
     numero: '0010-A', area: 'Servicios auxiliares', estado: 'Abierta',
     ordenesMantenimiento: [
-      { numero: 'OM-007', estado: 'Abierta', horasPrevistas: 4 },
+      { numero: 'OM-007', descripcion: 'Revisar circuito de agua de servicio', estado: 'Abierta', horasPrevistas: 4, costo: 450000 },
     ],
   },
 ]

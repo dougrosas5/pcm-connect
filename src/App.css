@@ -38,28 +38,39 @@
 .contenido p { line-height: 1.5; }
 .contador { color: var(--texto-secundario-legible); font-weight: normal; }
 .nota-demo, .ayuda { color: var(--texto-secundario-legible); font-size: 13px; }
-.nota-demo { max-width: 76ch; margin-bottom: 24px; }
-.busqueda { background: var(--superficie); border: 1px solid var(--borde); border-radius: 6px; padding: 20px; }
-.busqueda label { font-weight: 600; }
-.busqueda .ayuda { margin: 8px 0 12px; }
-.busqueda textarea { display: block; width: 100%; resize: vertical; min-height: 84px; }
-.acciones-busqueda { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-top: 12px; }
-.acciones-busqueda .ayuda { margin: 0; flex: 1; min-width: 200px; }
+.introduccion-tareas { margin: 0 0 4px; }
+.nota-demo { margin: 0 0 12px; }
+.busqueda { background: var(--superficie); border: 1px solid var(--borde); border-radius: 6px; padding: 12px; }
+.entrada-busqueda { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.busqueda label { font-weight: 600; font-size: 14px; }
+.busqueda .ayuda { margin: 6px 0 0; }
+.busqueda textarea { display: block; width: 100%; resize: vertical; min-height: 44px; }
 .boton-primario { background: var(--acento); color: var(--superficie); border: 1px solid var(--acento); border-radius: 4px; padding: 11px 16px; font-weight: 600; }
 .boton-primario:hover { background: #994b3b; border-color: #994b3b; }
 .avisos { overflow-wrap: anywhere; }
-.avisos:not(:empty) { margin-top: 16px; padding: 12px 16px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 4px; font-size: 14px; }
-.avisos p { margin: 0; font-weight: 600; }
-.avisos ul { margin: 8px 0 0; padding-left: 20px; }
-.avisos li { margin: 6px 0; line-height: 1.5; }
+.avisos:has(details), .avisos:has(p:not(:empty)) { margin-top: 8px; padding: 8px 12px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 4px; font-size: 13px; }
+.avisos p { margin: 0; }
+.avisos summary { cursor: pointer; font-weight: 600; padding: 6px 0; min-height: 32px; }
+.avisos ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 6px 28px; max-height: 160px; overflow-y: auto; margin: 4px 0; padding: 4px 4px 4px 20px; }
+.avisos li { line-height: 1.5; }
+.cabecera-preparacion { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; }
+.contenido .cabecera-preparacion h2 { margin: 0; }
+.resumen-costos { margin: 0 0 0 auto; font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.costo-pendiente { display: block; color: var(--texto-secundario-legible); font-size: 13px; }
 .estado-vacio { padding: 28px 20px; border: 1px dashed var(--borde); border-radius: 4px; line-height: 1.5; }
 .tabla-contenedor { max-width: 100%; overflow-x: auto; background: var(--superficie); border: 1px solid var(--borde); border-radius: 4px; }
-.tabla-tareas { width: 100%; min-width: 1060px; border-collapse: collapse; text-align: left; font-size: 14px; }
+.tabla-tareas { width: 100%; min-width: 1140px; border-collapse: collapse; text-align: left; font-size: 14px; }
 .tabla-tareas caption { padding: 12px; text-align: left; color: var(--texto-secundario-legible); font-size: 13px; }
-.tabla-tareas th, .tabla-tareas td { border-top: 1px solid var(--borde); padding: 10px 12px; vertical-align: top; }
+.tabla-tareas th, .tabla-tareas td { border-top: 1px solid var(--borde); padding: 8px 10px; vertical-align: top; }
 .tabla-tareas thead th { background: #f3f3f0; font-size: 12px; vertical-align: bottom; }
 .tabla-tareas tbody th { white-space: nowrap; font-weight: 600; }
-.tabla-tareas input { width: 100%; }
+.tabla-tareas .tarea-agrupada { vertical-align: middle; background: #f3f3f0; }
+.tabla-tareas tbody + tbody tr:first-child > * { border-top-width: 2px; }
+.descripcion-trabajo { min-width: 200px; max-width: 260px; line-height: 1.5; }
+.costo-om { white-space: nowrap; }
+.tabla-tareas input, .tabla-tareas select { width: 100%; }
+.campo-duracionPrevista { min-width: 130px; }
+.campo-duracionPrevista input, .campo-personas input { font-variant-numeric: tabular-nums; }
 .campo-responsable { min-width: 200px; }
 .campo-personas { min-width: 125px; }
 .numero { text-align: right; font-variant-numeric: tabular-nums; }
@@ -76,5 +87,8 @@
   .sidebar-footer { display: none; }
   .contenido { padding: 24px 16px; }
   .contenido h1 { margin-top: 16px; font-size: 28px; }
-  .busqueda { padding: 16px; }
+  .entrada-busqueda { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  .entrada-busqueda label { grid-column: 1 / -1; }
+  .resumen-costos { margin-left: 0; text-align: left; }
+  .avisos summary { min-height: 44px; }
 }
