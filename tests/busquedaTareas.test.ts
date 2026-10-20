@@ -49,7 +49,7 @@ test('la identidad de OM es única incluso si dos tareas la vinculan', () => {
 })
 
 test('una tarea abierta sin OM informa un estado vacío', () => {
-  const resultado = buscarTareas('sin-om', [{ numero: 'sin-om', area: 'Demo', estado: 'Abierta', ordenesMantenimiento: [] }], [])
+  const resultado = buscarTareas('sin-om', [{ numero: 'sin-om', descripcion: 'Tarea ficticia sin OM', area: 'Demo', estado: 'Abierta', ordenesMantenimiento: [] }], [])
   assert.equal(resultado.filas.length, 0)
   assert.match(resultado.avisos[0], /no tiene OM abiertas/u)
 })

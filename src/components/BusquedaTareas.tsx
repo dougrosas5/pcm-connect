@@ -106,15 +106,19 @@ export default function BusquedaTareas() {
             <table className="tabla-tareas" aria-describedby="ayuda-tabla">
               <caption>Preparación de tareas · una fila por OM</caption>
               <thead><tr>
-                {['N.º tarea', 'N.º OM', 'Descripción del trabajo', 'Duración prevista (h)', 'Criticidad', 'Costo estimado (Gs.)', 'Estado', 'Responsable', 'Personas'].map(columna => <th scope="col" key={columna}>{columna}</th>)}
+                {['N.º tarea', 'N.º OM', 'Descripción de la tarea', 'Duración prevista (h)', 'Criticidad', 'Costo estimado (Gs.)', 'Estado', 'Responsable', 'Personas'].map(columna => <th scope="col" key={columna}>{columna}</th>)}
               </tr></thead>
               {grupos.map(grupo => (
                 <tbody key={grupo.tarea}>
                   {grupo.ordenes.map((fila, indice) => (
                     <tr key={fila.numero}>
                       {indice === 0 && <th scope="rowgroup" rowSpan={grupo.ordenes.length} className="tarea-agrupada">{grupo.tarea}</th>}
-                      <th scope="row">{fila.numero}</th>
-                      <td className="descripcion-trabajo">{fila.descripcion}</td>
+                      {indice === 0 && (
+                        <>
+                          <th scope="rowgroup" rowSpan={grupo.ordenes.length}>{grupo.ordenes.map(om => om.numero).join(', ')}</th>
+                          <td rowSpan={grupo.ordenes.length} className="descripcion-trabajo">{tareasDemo.find(tarea => tarea.numero === grupo.tarea)?.descripcion}</td>
+                        </>
+                      )}
                       {campoEditable(fila, 'duracionPrevista')}
                       <td>{fila.criticidad ?? 'Baja'}</td>
                       <td className="numero costo-om">{fila.costo === undefined ? 'Sin definir' : formatoCosto.format(fila.costo)}</td>

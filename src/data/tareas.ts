@@ -14,6 +14,7 @@ export type OrdenMantenimiento = {
 
 export type Tarea = {
   numero: string
+  descripcion: string
   area: string
   estado: Estado
   ordenesMantenimiento: OrdenMantenimiento[]
@@ -26,6 +27,7 @@ export type Tarea = {
 export const tareasDemo: Tarea[] = [
   {
     numero: '1001', area: 'Taller mecánico', estado: 'Abierta',
+    descripcion: 'Mantenimiento de bomba hidráulica',
     ordenesMantenimiento: [
       { numero: 'OM-001', descripcion: 'Reemplazar sello de bomba auxiliar', estado: 'Abierta', horasPrevistas: 3, costo: 370000 },
       { numero: 'OM-002', descripcion: 'Alinear acoplamiento del motor', estado: 'Abierta', horasPrevistas: 2, costo: 350000 },
@@ -33,12 +35,14 @@ export const tareasDemo: Tarea[] = [
   },
   {
     numero: '1002', area: 'Taller mecánico', estado: 'Cerrada',
+    descripcion: 'Mantenimiento del ventilador auxiliar',
     ordenesMantenimiento: [
       { numero: 'OM-003', descripcion: 'Inspeccionar rodamientos del ventilador', estado: 'Cerrada', horasPrevistas: 2, costo: 220000 },
     ],
   },
   {
     numero: '1003', area: 'Taller eléctrico', estado: 'Abierta',
+    descripcion: 'Inspección del tablero eléctrico',
     ordenesMantenimiento: [
       { numero: 'OM-004', descripcion: 'Verificar protecciones del tablero eléctrico', estado: 'Abierta', horasPrevistas: 1.5, costo: 250000 },
       { numero: 'OM-005', descripcion: 'Cambiar contactor del circuito auxiliar', estado: 'Cerrada', horasPrevistas: 2, costo: 320000 },
@@ -46,12 +50,14 @@ export const tareasDemo: Tarea[] = [
   },
   {
     numero: '1004', area: 'Instrumentación', estado: 'Abierta',
+    descripcion: 'Revisión de instrumentación de presión',
     ordenesMantenimiento: [
       { numero: 'OM-006', descripcion: 'Calibrar transmisor de presión', estado: 'Cerrada', horasPrevistas: 1, costo: 250000 },
     ],
   },
   {
     numero: '0010-A', area: 'Servicios auxiliares', estado: 'Abierta',
+    descripcion: 'Mantenimiento del circuito de agua de servicio',
     ordenesMantenimiento: [
       { numero: 'OM-007', descripcion: 'Revisar circuito de agua de servicio', estado: 'Abierta', horasPrevistas: 4, costo: 450000 },
     ],
