@@ -73,7 +73,7 @@ export function errorDuracion(valor: string) {
     ? 'Ingresá una duración mayor que 0; admite decimales.' : ''
 }
 
-// Los grupos son solo de presentación: cada OM conserva su fila y su estado.
+// Las OM conservan su identidad en el guardado; la tabla presenta una tarea común.
 export function agruparPorTarea(filas: FilaOM[]) {
   const grupos = new Map<string, FilaOM[]>()
   for (const fila of filas) {
@@ -82,6 +82,33 @@ export function agruparPorTarea(filas: FilaOM[]) {
     else grupos.set(fila.tarea, [fila])
   }
   return Array.from(grupos, ([tarea, ordenes]) => ({ tarea, ordenes }))
+}
+
+export type DatosTarea = Pick<FilaOM, 'duracionPrevista' | 'responsable' | 'personas'>
+
+export function datosDeTarea(tarea: Tarea | undefined, ordenes: FilaOM[], guardados?: DatosTarea) {
+  if (guardados) return { datos: guardados, conflictos: [] as string[] }
+  const conflictos: string[] = []
+  // Recupera ediciones del formato anterior sin sumar duraciones de OM ni
+  // sobrescribir los originales. Las ediciones distintas requieren un valor común.
+  function recuperar(campo: keyof DatosTarea, inicial: string, etiqueta: string) {
+    const editados = [...new Set(ordenes
+      .filter(om => om[campo] !== (campo === 'duracionPrevista' ? String(om.horasPrevistas) : campo === 'personas' ? '1' : ''))
+      .map(om => om[campo]))]
+    if (editados.length > 1) {
+      conflictos.push(etiqueta)
+      return ''
+    }
+    return editados[0] ?? inicial
+  }
+  return {
+    datos: {
+      duracionPrevista: recuperar('duracionPrevista', tarea ? String(tarea.horasPrevistas) : '', 'duración'),
+      responsable: recuperar('responsable', '', 'responsable'),
+      personas: recuperar('personas', '1', 'personas'),
+    },
+    conflictos,
+  }
 }
 
 export function resumirCostos(filas: FilaOM[]) {

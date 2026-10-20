@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { responsablesPreparacion, tareasDemo } from '../src/data/tareas.ts'
-import { agruparPorTarea, buscarTareas, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../src/features/busquedaTareas.ts'
+import { agruparPorTarea, buscarTareas, datosDeTarea, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../src/features/busquedaTareas.ts'
 
 test('separa comas, espacios y saltos de línea, preservando ceros y guiones', () => {
   const resultado = buscarTareas('1001,\t1003\n0010-A', tareasDemo, [])
@@ -49,7 +49,7 @@ test('la identidad de OM es única incluso si dos tareas la vinculan', () => {
 })
 
 test('una tarea abierta sin OM informa un estado vacío', () => {
-  const resultado = buscarTareas('sin-om', [{ numero: 'sin-om', descripcion: 'Tarea ficticia sin OM', area: 'Demo', estado: 'Abierta', ordenesMantenimiento: [] }], [])
+  const resultado = buscarTareas('sin-om', [{ numero: 'sin-om', descripcion: 'Tarea ficticia sin OM', area: 'Demo', estado: 'Abierta', horasPrevistas: 1, ordenesMantenimiento: [] }], [])
   assert.equal(resultado.filas.length, 0)
   assert.match(resultado.avisos[0], /no tiene OM abiertas/u)
 })
@@ -130,4 +130,56 @@ test('los costos faltantes dejan el total pendiente y un cero explícito sigue s
   assert.deepEqual(resumirCostos(mixto.filas), { subtotal: 720000, sinDefinir: 1 })
   assert.deepEqual(resumirCostos([]), { subtotal: undefined, sinDefinir: 0 })
   assert.deepEqual(resumirCostos([{ ...desconocido.filas[0], costo: 0 }]), { subtotal: 0, sinDefinir: 0 })
+})
+
+test('la duración común viene de la tarea y no se suma ni se toma de sus OM', () => {
+  const tarea = { ...tareasDemo[0], horasPrevistas: 7.5 }
+  const { filas } = buscarTareas('1001', [tarea], [])
+  assert.equal(datosDeTarea(tarea, filas).datos.duracionPrevista, '7.5')
+  assert.equal(datosDeTarea(tarea, filas).datos.responsable, '')
+  assert.equal(datosDeTarea(tarea, filas).datos.personas, '1')
+  assert.deepEqual(datosDeTarea(tarea, filas).conflictos, [])
+})
+
+test('cada tarea suma solo sus OM incorporadas; buscar otra vez no duplica costos', () => {
+  const primera = buscarTareas('1001 1003 1002', tareasDemo, [])
+  const repetida = buscarTareas('1001 1003', tareasDemo, primera.filas)
+  const grupos = agruparPorTarea(repetida.filas)
+  assert.deepEqual(grupos.map(grupo => resumirCostos(grupo.ordenes)), [
+    { subtotal: 720000, sinDefinir: 0 }, { subtotal: 250000, sinDefinir: 0 },
+  ])
+  assert.equal(resumirCostos(repetida.filas).subtotal, 970000)
+})
+
+test('los campos comunes guardados prevalecen sin modificar las OM ni otras tareas', () => {
+  const { filas } = buscarTareas('1001 1003', tareasDemo, [])
+  const originales = structuredClone(filas)
+  const datos = { duracionPrevista: '6.25', responsable: 'Douglas', personas: '2' }
+  assert.deepEqual(datosDeTarea(tareasDemo[0], filas.slice(0, 2), datos).datos, datos)
+  assert.equal(datosDeTarea(tareasDemo[2], filas.slice(2)).datos.duracionPrevista, '1.5')
+  assert.equal(datosDeTarea(tareasDemo[2], filas.slice(2)).datos.responsable, '')
+  assert.deepEqual(filas, originales)
+})
+
+test('recupera una edición anterior por OM sin perder el guardado original', () => {
+  const { filas } = buscarTareas('1001', tareasDemo, [])
+  filas[1] = { ...filas[1], duracionPrevista: '4.25', responsable: 'Pepe', personas: '3' }
+  const originales = structuredClone(filas)
+  const comun = datosDeTarea(tareasDemo[0], filas)
+  assert.deepEqual(comun.datos, { duracionPrevista: '4.25', responsable: 'Pepe', personas: '3' })
+  assert.deepEqual(comun.conflictos, [])
+  assert.deepEqual(filas, originales)
+})
+
+test('ediciones antiguas contradictorias no eligen una OM arbitrariamente', () => {
+  const { filas } = buscarTareas('1001', tareasDemo, [])
+  filas[0] = { ...filas[0], duracionPrevista: '8', responsable: 'Douglas', personas: '2' }
+  filas[1] = { ...filas[1], duracionPrevista: '9', responsable: 'Ale', personas: '3' }
+  const originales = structuredClone(filas)
+  const comun = datosDeTarea(tareasDemo[0], filas)
+  assert.deepEqual(comun.datos, { duracionPrevista: '', responsable: '', personas: '' })
+  assert.deepEqual(comun.conflictos, ['duración', 'responsable', 'personas'])
+  assert.deepEqual(filas, originales)
+  const corregidos = { duracionPrevista: '7', responsable: 'Pepe', personas: '4' }
+  assert.deepEqual(datosDeTarea(tareasDemo[0], filas, corregidos), { datos: corregidos, conflictos: [] })
 })

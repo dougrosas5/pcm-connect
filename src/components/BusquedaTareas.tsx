@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { responsablesPreparacion, tareasDemo } from '../data/tareas'
-import { agruparPorTarea, buscarTareas, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../features/busquedaTareas'
-import type { FilaOM } from '../features/busquedaTareas'
+import { agruparPorTarea, buscarTareas, datosDeTarea, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../features/busquedaTareas'
+import type { DatosTarea } from '../features/busquedaTareas'
+import type { Preparacion } from '../features/planificaciones'
 
 type CampoEditable = 'duracionPrevista' | 'responsable' | 'personas'
 
@@ -12,36 +12,38 @@ const campos = {
 }
 const formatoCosto = new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 })
 
-export default function BusquedaTareas() {
-  const [entrada, setEntrada] = useState('')
-  const [filas, setFilas] = useState<FilaOM[]>([])
-  const [avisos, setAvisos] = useState<string[]>([])
-  const [resumen, setResumen] = useState('')
-  const [revisados, setRevisados] = useState<Record<string, boolean>>({})
-  const pendientes = filas.filter(fila => errorDuracion(fila.duracionPrevista) || errorResponsable(fila.responsable) || errorPersonas(fila.personas)).length
-  const grupos = agruparPorTarea(filas)
+export default function BusquedaTareas({ preparacion, onChange }: {
+  preparacion: Preparacion
+  onChange: (cambios: Partial<Preparacion>) => void
+}) {
+  const { entrada, filas, avisos, resumen, revisados, datosPorTarea = {} } = preparacion
+  const grupos = agruparPorTarea(filas).map(grupo => {
+    const tarea = tareasDemo.find(tarea => tarea.numero === grupo.tarea)
+    return { ...grupo, original: tarea, ...datosDeTarea(tarea, grupo.ordenes, datosPorTarea[grupo.tarea]), costos: resumirCostos(grupo.ordenes) }
+  })
+  const pendientes = grupos.filter(({ datos }) => errorDuracion(datos.duracionPrevista) || errorResponsable(datos.responsable) || errorPersonas(datos.personas)).length
   const costos = resumirCostos(filas)
 
-  function actualizar(numero: string, campo: CampoEditable, valor: string) {
-    setFilas(previas => previas.map(fila => fila.numero === numero ? { ...fila, [campo]: valor } : fila))
+  function actualizar(tarea: string, datos: DatosTarea, campo: CampoEditable, valor: string) {
+    onChange({ datosPorTarea: { ...datosPorTarea, [tarea]: { ...datos, [campo]: valor } } })
   }
 
-  function campoEditable(fila: FilaOM, campo: CampoEditable) {
-    const id = `${fila.numero}-${campo}`
-    const error = revisados[id] ? campos[campo].validar(fila[campo]) : ''
+  function campoEditable(tarea: string, datos: DatosTarea, campo: CampoEditable) {
+    const id = `${tarea}-${campo}`
+    const error = revisados[id] ? campos[campo].validar(datos[campo]) : ''
     const atributos = {
       id,
       required: true,
-      value: fila[campo],
-      'aria-label': `${campos[campo].etiqueta} de tarea ${fila.tarea}, OM ${fila.numero}`,
+      value: datos[campo],
+      'aria-label': `${campos[campo].etiqueta} de tarea ${tarea}`,
       'aria-invalid': Boolean(error),
       'aria-describedby': error ? `${id}-error` : undefined,
-      onBlur: () => setRevisados(previos => ({ ...previos, [id]: true })),
+      onBlur: () => onChange({ revisados: { ...revisados, [id]: true } }),
     }
     return (
       <td className={`campo-${campo}`}>
         {campo === 'responsable' ? (
-          <select {...atributos} onChange={event => actualizar(fila.numero, campo, event.target.value)}>
+          <select {...atributos} onChange={event => actualizar(tarea, datos, campo, event.target.value)}>
             <option value="">Seleccionar responsable</option>
             {responsablesPreparacion.map(responsable => <option key={responsable} value={responsable}>{responsable}</option>)}
           </select>
@@ -50,7 +52,7 @@ export default function BusquedaTareas() {
             {...atributos} type="number"
             min={campo === 'personas' ? 1 : 0}
             step={campo === 'personas' ? 1 : 'any'}
-            onChange={event => actualizar(fila.numero, campo, event.target.value)}
+            onChange={event => actualizar(tarea, datos, campo, event.target.value)}
           />
         )}
         {error && <p id={`${id}-error`} className="error-campo">{error}</p>}
@@ -61,17 +63,15 @@ export default function BusquedaTareas() {
   return (
     <>
       <p className="introduccion-tareas">Buscá tareas y prepará sus órdenes de mantenimiento abiertas.</p>
-      <p className="nota-demo">Demo · Tareas ficticias y costos estimados en guaraníes (Gs.) basados en referencias públicas; no son cotizaciones. Sin conexión a sistemas corporativos. El borrador se conserva al navegar y se pierde al recargar.</p>
+      <p className="nota-demo">Demo · Tareas ficticias y costos estimados en guaraníes (Gs.) basados en referencias públicas; no son cotizaciones. Sin conexión a sistemas corporativos. Los cambios se guardan localmente al editar.</p>
       <form className="busqueda" onSubmit={event => {
         event.preventDefault()
         const resultado = buscarTareas(entrada, tareasDemo, filas)
-        setFilas(resultado.filas)
-        setAvisos(resultado.avisos)
-        setResumen(`Búsqueda completada: ${resultado.agregadas} OM agregadas. Total: ${resultado.filas.length}.`)
+        onChange({ filas: resultado.filas, avisos: resultado.avisos, resumen: `Búsqueda completada: ${resultado.agregadas} OM agregadas. Total: ${resultado.filas.length}.` })
       }}>
         <div className="entrada-busqueda">
           <label htmlFor="numeros-tarea">Números de tarea</label>
-          <textarea id="numeros-tarea" rows={1} value={entrada} onChange={event => setEntrada(event.target.value)} aria-describedby="ayuda-busqueda ejemplos-tareas" placeholder="1001, 1003" />
+          <textarea id="numeros-tarea" rows={1} value={entrada} onChange={event => onChange({ entrada: event.target.value })} aria-describedby="ayuda-busqueda ejemplos-tareas" placeholder="1001, 1003" />
           <button className="boton-primario" type="submit">Buscar tareas</button>
         </div>
         <p id="ayuda-busqueda" className="ayuda">Separá por comas, espacios o saltos de línea. Cada búsqueda agrega OM sin duplicar las existentes.</p>
@@ -89,44 +89,44 @@ export default function BusquedaTareas() {
       </div>
 
       <div className="cabecera-preparacion">
-        <h2>OM de la preparación <span className="contador">({filas.length})</span></h2>
+        <h2>Tareas de la preparación <span className="contador">({grupos.length})</span></h2>
         <p className="resumen-costos">
           <span>{costos.sinDefinir > 0 && costos.subtotal !== undefined ? 'Subtotal conocido' : 'Costo total estimado'}: </span>
           <strong>{filas.length === 0 ? 'Sin OM' : costos.subtotal === undefined ? 'Sin definir' : `Gs. ${formatoCosto.format(costos.subtotal)}`}</strong>
           {costos.sinDefinir > 0 && <span className="costo-pendiente">Total pendiente · {costos.sinDefinir} OM sin costo definido</span>}
         </p>
       </div>
-      <p id="ayuda-tabla" className="ayuda">Solo OM abiertas. Duración prevista por OM, editable; no equivale a horas-persona ni a horas reales. Personas: 1 por defecto en esta demo, editable.</p>
+      <p id="ayuda-tabla" className="ayuda">Una fila por tarea con sus OM abiertas. Duración prevista, responsable y personas comunes a la tarea; el costo suma sus OM. La duración no equivale a horas-persona ni a horas reales.</p>
       {filas.length === 0 ? (
         <div className="estado-vacio">Todavía no hay OM en la tabla. Buscá 1001 para comenzar; los avisos explican las tareas excluidas.</div>
       ) : (
         <>
-          <p className="ayuda">{pendientes > 0 ? `${pendientes} OM con datos por completar o corregir.` : 'Todas las OM tienen duración, responsable y cantidad de personas válidos.'}</p>
+          <p className="ayuda">{pendientes > 0 ? `${pendientes} tareas con datos por completar o corregir.` : 'Todas las tareas tienen duración, responsable y cantidad de personas válidos.'}</p>
           <div className="tabla-contenedor" role="region" aria-label="Órdenes de mantenimiento; desplazamiento horizontal" tabIndex={0}>
             <table className="tabla-tareas" aria-describedby="ayuda-tabla">
-              <caption>Preparación de tareas · una fila por OM</caption>
+              <caption>Preparación de tareas · una fila por tarea</caption>
               <thead><tr>
                 {['N.º tarea', 'N.º OM', 'Descripción de la tarea', 'Duración prevista (h)', 'Criticidad', 'Costo estimado (Gs.)', 'Estado', 'Responsable', 'Personas'].map(columna => <th scope="col" key={columna}>{columna}</th>)}
               </tr></thead>
               {grupos.map(grupo => (
                 <tbody key={grupo.tarea}>
-                  {grupo.ordenes.map((fila, indice) => (
-                    <tr key={fila.numero}>
-                      {indice === 0 && <th scope="rowgroup" rowSpan={grupo.ordenes.length} className="tarea-agrupada">{grupo.tarea}</th>}
-                      {indice === 0 && (
-                        <>
-                          <th scope="rowgroup" rowSpan={grupo.ordenes.length}>{grupo.ordenes.map(om => om.numero).join(', ')}</th>
-                          <td rowSpan={grupo.ordenes.length} className="descripcion-trabajo">{tareasDemo.find(tarea => tarea.numero === grupo.tarea)?.descripcion}</td>
-                        </>
-                      )}
-                      {campoEditable(fila, 'duracionPrevista')}
-                      <td>{fila.criticidad ?? 'Baja'}</td>
-                      <td className="numero costo-om">{fila.costo === undefined ? 'Sin definir' : formatoCosto.format(fila.costo)}</td>
-                      <td><span className="estado">{fila.estado}</span></td>
-                      {campoEditable(fila, 'responsable')}
-                      {campoEditable(fila, 'personas')}
-                    </tr>
-                  ))}
+                  <tr>
+                    <th scope="row" className="tarea-agrupada">{grupo.tarea}</th>
+                    <td>{grupo.ordenes.map(om => om.numero).join(', ')}</td>
+                    <td className="descripcion-trabajo">
+                      {grupo.original?.descripcion}
+                      {grupo.conflictos.length > 0 && <p className="error-campo">Hay ediciones anteriores distintas por OM. Definí un valor común de {grupo.conflictos.join(', ')} para esta tarea.</p>}
+                    </td>
+                    {campoEditable(grupo.tarea, grupo.datos, 'duracionPrevista')}
+                    <td>{grupo.ordenes[0].criticidad ?? 'Baja'}</td>
+                    <td className="numero costo-om">
+                      {grupo.costos.subtotal === undefined ? 'Sin definir' : formatoCosto.format(grupo.costos.subtotal)}
+                      {grupo.costos.sinDefinir > 0 && grupo.costos.subtotal !== undefined && <span className="costo-pendiente">Subtotal · total pendiente</span>}
+                    </td>
+                    <td><span className="estado">{grupo.original?.estado ?? 'Abierta'}</span></td>
+                    {campoEditable(grupo.tarea, grupo.datos, 'responsable')}
+                    {campoEditable(grupo.tarea, grupo.datos, 'personas')}
+                  </tr>
                 </tbody>
               ))}
             </table>

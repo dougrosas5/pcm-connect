@@ -5,6 +5,14 @@
 ## Propósito
 Interconectar planificación de mantenimiento (PCM) y Taller, gestionar la viabilidad por OM, las decisiones de PCM, la distribución del trabajo y la validación de horas, en una herramienta clara y trazable.
 
+## Planificaciones locales (iteración 3)
+
+La preparación incluye cabecera con remolcador ficticio obligatorio, fecha de parada válida y horas positivas con decimales. Al crear y guardar se asigna un único identificador incremental: nombre visible «Planificación N» y código «PCM-000N» (relleno mínimo de cuatro dígitos), sin TAG adicional. Estado inicial: Borrador.
+
+Cada planificación conserva su propia preparación y permite volver a consultarla. El contador histórico no se reduce al quitar planes en futuras iteraciones. La demo guarda planes y contador en `localStorage`; no es persistencia multiusuario. El borrador sin planificación se incorpora una sola vez al crear, conservando las OM y sus ediciones. No se agregan aprobaciones, Kanban ni asignaciones en esta iteración. Véase [detalle y comprobaciones](ITERACION_3_PLANIFICACIONES.md).
+
+Corrección posterior acordada: la tabla de preparación muestra una fila por **tarea**, con las OM juntas y una única duración prevista procedente de la tarea, un responsable, personas y un estado comunes. El costo es la suma de las OM abiertas incorporadas; si falta alguno, se indica subtotal o «Sin definir». Los campos comunes se guardan por tarea y planificación, sin borrar las filas de OM existentes. Las ediciones antiguas compatibles se recuperan; si hay valores distintos editados por OM, se solicita definir el valor común sin sobrescribir los originales. Esta corrección actualiza la presentación por OM descrita en las iteraciones anteriores.
+
 ## Actores
 - **PCM / organizador**: arma propuestas, ingresa números de tarea, consulta OM y revisa la respuesta de Taller. Decide confirmar, devolver a revisión o cancelar.
 - **Taller / evaluador**: indica viabilidad de **cada OM**, registrando motivo para las no viables.
@@ -13,7 +21,7 @@ Interconectar planificación de mantenimiento (PCM) y Taller, gestionar la viabi
 
 ## Flujo acordado
 1. PCM inicia borrador de planificación/escala. Ingresa uno o varios IDs de tarea (por comas, líneas o pegado múltiple). Solo los IDs de tarea, responsables y cantidad de personas se introducen manualmente en la preparación inicial, según el último acuerdo.
-2. La base simulada relaciona tarea -> una o varias OM. Para cada OM se genera **fila independiente**. Traer área, horas estimadas, criticidad (Baja inicialmente), costos cuando existan y estado disponible. Excluir tareas/OM cerradas del plan; informar IDs inexistentes y cerrados con mensajes claros, sin bloquear la búsqueda de otros IDs.
+2. La base simulada relaciona tarea -> una o varias OM. La preparación muestra **una fila por tarea**, con sus OM vinculadas, duración común, responsable común, costo sumado y estado de tarea. Excluir tareas/OM cerradas del plan; informar IDs inexistentes y cerrados con mensajes claros, sin bloquear la búsqueda de otros IDs. Conservar las identidades individuales de OM en los datos.
 3. PCM envía una propuesta a Taller. Taller evalúa cada OM como viable/no viable. Para no viable, registrar motivo, quién evaluó y cuándo.
 4. PCM recibe devolución: puede **confirmar continuar con solo OM viables**, **devolver a revisión** para modificar y reenviar, o **cancelar** toda la planificación. Conservar decisiones/versiones y evaluaciones antiguas; no borrar ni transformar OM no viable en viable por decisión de PCM.
 5. Tres encargados asignan OM confirmadas a trabajadores desde una lista fija mediante drag and drop (o alternativa de teclado/clic). Una OM puede asignarse a varias personas; una persona puede recibir diversas OM sin superposición horaria. Mostrar carga y avisos de conflictos.
@@ -40,14 +48,13 @@ No equiparar estado de PCM Connect con cierre oficial de OM en el ERP externo.
 ## Reglas de datos
 - IDs de tarea y OM como string para conservar guiones y ceros a la izquierda.
 - La identidad de una OM dentro de la planificación debe ser estable y única; no duplicar por reingresar el mismo ID de tarea sin aviso.
-- Una tarea puede tener múltiples OM, y cada OM puede tener viabilidad, motivo, responsable/asignación y estado propios.
-- Las horas previstas de un trabajo NO se multiplican automáticamente por el número de OM del mismo número de tarea. Distinguir duración de una OM de horas-persona por empleado.
+- Una tarea puede tener múltiples OM. La preparación tiene un responsable y estado comunes por tarea; la evaluación individual de viabilidad de OM pertenece a una etapa posterior.
+- Las horas previstas proceden de la tarea y NO se suman ni multiplican por el número de OM. Distinguir duración de tarea de horas-persona y horas reales.
 - Datos de ejemplo no son hechos ni datos operativos de empresa. Costos faltantes se muestran «Sin definir», nunca un falso 0.
 
 ## Decisiones pendientes que no se deben adivinar
 - ETA vs ETA(F) y campos exactos de agenda de arribos.
 - Forma en que los tres encargados se identifican/autentican en producción. En demo, roles simulados claramente marcados.
-- Duración por tarea vs duración específica de cada OM si difieren.
 - Cuándo comienza/termina el cómputo de una jornada, turnos y reglas laborales de horas.
 - Reglas definitivas de horario, descansos, especialidad, personal tercerizado y distribución de OM con varias personas.
 - Mecanismo de cambio de estado de OM respecto al sistema corporativo original.
@@ -56,7 +63,7 @@ No equiparar estado de PCM Connect con cierre oficial de OM en el ERP externo.
 
 ## Secuencia recomendada de implementación
 **Fase 0:** inspeccionar repositorio actual, reparar errores reales, preservar estética y hacer que build/lint pasen.
-**Fase 1:** búsqueda múltiple por ID de tarea + tabla de filas por OM con demo data; responsable y cantidad editables por OM; estados y avisos.
+**Fase 1:** búsqueda múltiple por ID de tarea + tabla de filas por tarea con demo data y sus OM vinculadas; duración, responsable y cantidad comunes por tarea; estados y avisos.
 **Fase 2:** versiones de planificación, envío a Taller, viabilidad individual por OM, motivos y decisión final PCM.
 **Fase 3:** tres encargados simulados, trabajadores ficticios, asignaciones drag and drop accesibles, horario y prevención de conflictos.
 **Fase 4:** registrar finalización, revisar/aprobar horas y legajo histórico por empleado.

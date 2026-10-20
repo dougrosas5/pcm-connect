@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import './App.css'
-import BusquedaTareas from './components/BusquedaTareas'
+import Planificaciones from './components/Planificaciones'
 
 const paginas = ['Planificación', 'Tareas', 'Personal'] as const
 
@@ -40,9 +40,9 @@ function App() {
             <button className="boton-primario" onClick={() => setPaginaActual('Tareas')}>Búsqueda de tareas</button>
           </>
         )}
-        {/* Se mantiene montado para conservar el borrador al cambiar de pantalla. */}
-        <section hidden={paginaActual !== 'Tareas'} aria-label="Búsqueda de tareas y OM">
-          <BusquedaTareas />
+        {/* Ambas entradas conservan el mismo espacio de trabajo y la planificación activa. */}
+        <section hidden={paginaActual === 'Personal'} aria-label="Planificaciones y preparación de tareas">
+          <Planificaciones />
         </section>
         {paginaActual === 'Personal' && (
           <p>Gestión y asignación del personal de mantenimiento. Módulo pendiente de una próxima etapa.</p>
