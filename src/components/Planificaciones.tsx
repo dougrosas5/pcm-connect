@@ -4,6 +4,9 @@ import { remolcadoresDemo } from '../data/remolcadores'
 import { clavePlanificaciones, guardarPlanificaciones, leerPlanificaciones } from '../features/almacenPlanificaciones'
 import { actualizarPreparacion, crearPlanificacion, erroresDatosGenerales, registroVacio } from '../features/planificaciones'
 import type { DatosGenerales, Preparacion, RegistroPlanificaciones } from '../features/planificaciones'
+import ValidacionTaller from './ValidacionTaller'
+import { enviarATaller, permisos, preparacionEditable, revisionDe, rolesDemo, tareaEditable } from '../features/validacionTaller'
+import type { Actor, RolDemo } from '../features/validacionTaller'
 
 const datosVacios: DatosGenerales = { remolcador: '', fechaParada: '', horasParada: '' }
 const mensajeLectura = 'No se pudieron leer las planificaciones locales. Los datos guardados no se modificaron. Revisá el almacenamiento del navegador y recargá para volver a intentar.'
@@ -21,7 +24,7 @@ function mostrarFecha(fecha: string) {
   return `${dia}/${mes}/${anio}`
 }
 
-export default function Planificaciones() {
+export default function Planificaciones({ vistaTaller = false }: { vistaTaller?: boolean }) {
   const [inicial] = useState(cargarRegistro)
   const [registro, setRegistro] = useState(inicial.registro)
   const [bloqueado, setBloqueado] = useState(Boolean(inicial.error))
@@ -30,6 +33,8 @@ export default function Planificaciones() {
   const [datos, setDatos] = useState<DatosGenerales>({ ...datosVacios })
   const [validar, setValidar] = useState(false)
   const [mensaje, setMensaje] = useState('')
+  const [rol, setRol] = useState<RolDemo>('PCM')
+  const actor: Actor = { rol, usuario: `${rol} demo` }
   const plan = registro.planificaciones.find(item => item.codigo === registro.activa)
   const preparacion = plan?.preparacion ?? registro.sinPlanificacion
   const errores = erroresDatosGenerales(datos)
@@ -58,8 +63,14 @@ export default function Planificaciones() {
       setErrorGuardado(mensajeLectura)
       return false
     }
+    let siguiente: RegistroPlanificaciones
     try {
-      const siguiente = cambiar(actual)
+      siguiente = cambiar(actual)
+    } catch (error) {
+      setErrorGuardado(error instanceof Error ? error.message : 'No se pudo aplicar el cambio.')
+      return false
+    }
+    try {
       guardarPlanificaciones(window.localStorage, siguiente)
       setRegistro(siguiente)
       setErrorGuardado('')
@@ -71,7 +82,7 @@ export default function Planificaciones() {
   }
 
   function cambiarPreparacion(cambios: Partial<Preparacion>) {
-    guardar(actual => actualizarPreparacion(actual, plan?.codigo ?? null, cambios))
+    guardar(actual => actualizarPreparacion(actual, plan?.codigo ?? null, cambios, actor))
   }
 
   function abrir(codigo: string) {
@@ -86,6 +97,14 @@ export default function Planificaciones() {
 
   return (
     <>
+      <div className="rol-demo">
+        <label htmlFor="rol-demo">Rol simulado (demo)</label>
+        <select id="rol-demo" value={rol} onChange={event => setRol(event.target.value as RolDemo)}>{rolesDemo.map(nombre => <option key={nombre}>{nombre}</option>)}</select>
+        <p className="ayuda">Simulación local sin autenticación ni seguridad real. Los encargados no tienen permiso de evaluación.</p>
+      </div>
+      {errorGuardado && <p className="aviso-guardado" role="alert">{errorGuardado}</p>}
+      {vistaTaller && <ValidacionTaller registro={registro} actor={actor} guardar={guardar} bloqueado={bloqueado} />}
+      <div hidden={vistaTaller}>
       <div className="selector-planificaciones">
         <div className="consulta-planificaciones">
           <label htmlFor="planificacion-guardada">Consultar planificación</label>
@@ -96,7 +115,7 @@ export default function Planificaciones() {
             ))}
           </select>
         </div>
-        <button className="boton-secundario" disabled={bloqueado || creando} onClick={() => {
+        <button className="boton-secundario" disabled={bloqueado || creando || !permisos(actor).organizar} onClick={() => {
           setDatos({ ...datosVacios })
           setValidar(false)
           setCreando(true)
@@ -104,7 +123,6 @@ export default function Planificaciones() {
         }}>Nueva planificación</button>
       </div>
       <p className="nota-demo">Demo · Remolcadores y tareas ficticios. Guardado local en este navegador; no se comparte entre equipos ni reemplaza una base de datos para varios usuarios.</p>
-      {errorGuardado && <p className="aviso-guardado" role="alert">{errorGuardado}</p>}
       <p className="estado-guardado" role="status">{mensaje}</p>
 
       <section className="datos-planificacion" aria-labelledby="titulo-datos-planificacion">
@@ -114,12 +132,12 @@ export default function Planificaciones() {
             event.preventDefault()
             setValidar(true)
             if (Object.values(errores).some(Boolean)) return
-            if (guardar(actual => crearPlanificacion(actual, datos))) {
+            if (guardar(actual => crearPlanificacion(actual, datos, actor))) {
               setCreando(false)
               setMensaje('Planificación creada. Los cambios en sus tareas y OM se guardan automáticamente en este navegador.')
             }
           }}>
-            <fieldset disabled={bloqueado}>
+            <fieldset disabled={bloqueado || !permisos(actor).organizar}>
               <legend className="ayuda">Nueva planificación · Completá los tres campos obligatorios.</legend>
               <div className="campos-planificacion">
                 <div>
@@ -161,15 +179,30 @@ export default function Planificaciones() {
         )}
       </section>
 
+      {!creando && plan && <>
+        <p className="ayuda">{preparacionEditable(plan, actor) ? 'Preparación editable por PCM. Los cambios en datos evaluados requieren reevaluación de las OM afectadas.' : 'Preparación en solo lectura para este rol o etapa. Consultá los resultados y las correcciones autorizadas en Validación Taller.'}</p>
+        {(plan.estado === 'Borrador' || plan.estado === 'En revisión') && <button type="button" className="boton-primario" disabled={bloqueado || !permisos(actor).organizar} onClick={() => {
+          if (guardar(actual => enviarATaller(actual, plan.codigo, actor))) setMensaje(`${plan.codigo} enviada a Taller. Abrí Validación Taller para evaluarla.`)
+        }}>{plan.estado === 'En revisión' ? 'Reenviar a Taller' : 'Enviar a Taller'}</button>}
+      </>}
+
       {/* Sin cabecera aún: se conserva el flujo previo y se incorpora al crear. */}
       {(!creando || !plan) && (
         <section aria-label={plan ? `Tareas y OM de ${plan.codigo}` : 'Tareas y OM sin planificación'}>
           {!plan && <p className="ayuda">Podés preparar tareas antes de crear la planificación. Se guardan como borrador sin número y se incorporan al crearla.</p>}
-          <fieldset className="area-tareas" disabled={bloqueado}>
-            <BusquedaTareas key={plan?.codigo ?? 'sin-planificacion'} preparacion={preparacion} onChange={cambiarPreparacion} />
+          <fieldset className="area-tareas" disabled={bloqueado || !permisos(actor).organizar || Boolean(plan && !preparacionEditable(plan, actor))}>
+            <BusquedaTareas key={plan?.codigo ?? 'sin-planificacion'} preparacion={preparacion} onChange={cambiarPreparacion}
+              puedeEditarTarea={tarea => !plan || tareaEditable(plan, tarea, actor)}
+              detalleOM={om => {
+                if (!plan) return undefined
+                const revision = revisionDe(plan, om)
+                return `${revision.cancelada ? 'Cancelada' : revision.resultado} · r${revision.revision}${revision.datos ? ` · Datos individuales: ${revision.datos.duracionPrevista} h, ${revision.datos.responsable}, ${revision.datos.personas} personas. Ver Validación Taller.` : ''}`
+              }}
+              onQuitar={!plan || plan.estado === 'Borrador' ? ordenes => cambiarPreparacion({ filas: preparacion.filas.filter(fila => !ordenes.includes(fila.numero)) }) : undefined} />
           </fieldset>
         </section>
       )}
+      </div>
     </>
   )
 }

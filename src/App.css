@@ -100,6 +100,36 @@ button:disabled { cursor: default; opacity: 0.65; }
 .estado-guardado:empty { display: none; }
 .estado-guardado { font-size: 13px; }
 
+.rol-demo { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 18px 0; border-bottom: 1px solid var(--borde); padding-bottom: 12px; }
+.rol-demo label { font-size: 14px; font-weight: 600; }
+.rol-demo .ayuda { flex-basis: 100%; margin: 0; }
+.selector-taller { margin: 20px 0 12px; }
+.resumen-validacion { padding: 12px 0; border-block: 1px solid var(--borde); font-size: 14px; }
+.tabla-validacion { min-width: 1060px; }
+.tabla-validacion tbody th { white-space: normal; min-width: 210px; }
+.tabla-validacion td { min-width: 130px; }
+.tabla-validacion td:nth-child(4) { min-width: 200px; }
+.tabla-validacion td:nth-child(5) { min-width: 240px; }
+.tabla-validacion textarea { width: 100%; resize: vertical; }
+.tabla-validacion button { margin-top: 6px; }
+.detalle-om { display: block; margin: 6px 0; font-weight: normal; color: var(--texto-secundario-legible); font-size: 12px; line-height: 1.5; }
+.descripcion-om { font-size: 14px; color: var(--grafito); }
+.correccion-om label { display: block; font-size: 14px; font-weight: 600; margin-block: 12px; }
+.correccion-om input, .correccion-om select, .correccion-om textarea { display: block; width: 100%; margin-top: 6px; }
+.campos-correccion { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
+.confirmacion-cancelacion { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 12px; }
+.confirmacion-cancelacion input { flex-shrink: 0; }
+#motivo-pcm { display: block; width: 100%; margin-top: 6px; }
+.historial-taller { margin-top: 28px; background: var(--superficie); border: 1px solid var(--borde); border-radius: 4px; padding: 12px; }
+.historial-taller summary { cursor: pointer; padding: 8px 0; font-size: 14px; font-weight: 600; }
+.historial-taller ol { padding-left: 24px; max-height: 520px; overflow-y: auto; }
+.historial-taller li { padding: 12px 8px; border-top: 1px solid var(--borde); font-size: 14px; overflow-wrap: anywhere; }
+.historial-taller p { margin: 6px 0; }
+.historial-taller dd { margin: 6px 0 12px; white-space: pre-wrap; }
+.historial-taller .datos-historicos { padding-left: 18px; }
+.historial-taller .datos-historicos li { padding: 3px 0; border: 0; }
+.boton-quitar { display: inline-block; border: 1px solid var(--borde); border-radius: 4px; background: var(--superficie); font-size: 12px; padding: 4px 8px; margin: 3px 0 3px 6px; }
+
 @media (max-width: 1200px) {
   .campos-planificacion { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }

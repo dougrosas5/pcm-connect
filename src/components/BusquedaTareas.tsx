@@ -12,9 +12,12 @@ const campos = {
 }
 const formatoCosto = new Intl.NumberFormat('es-PY', { maximumFractionDigits: 0 })
 
-export default function BusquedaTareas({ preparacion, onChange }: {
+export default function BusquedaTareas({ preparacion, onChange, puedeEditarTarea = () => true, onQuitar, detalleOM }: {
   preparacion: Preparacion
   onChange: (cambios: Partial<Preparacion>) => void
+  puedeEditarTarea?: (tarea: string) => boolean
+  onQuitar?: (ordenes: string[]) => void
+  detalleOM?: (om: string) => string | undefined
 }) {
   const { entrada, filas, avisos, resumen, revisados, datosPorTarea = {} } = preparacion
   const grupos = agruparPorTarea(filas).map(grupo => {
@@ -34,6 +37,7 @@ export default function BusquedaTareas({ preparacion, onChange }: {
     const atributos = {
       id,
       required: true,
+      disabled: !puedeEditarTarea(tarea),
       value: datos[campo],
       'aria-label': `${campos[campo].etiqueta} de tarea ${tarea}`,
       'aria-invalid': Boolean(error),
@@ -112,7 +116,12 @@ export default function BusquedaTareas({ preparacion, onChange }: {
                 <tbody key={grupo.tarea}>
                   <tr>
                     <th scope="row" className="tarea-agrupada">{grupo.tarea}</th>
-                    <td>{grupo.ordenes.map(om => om.numero).join(', ')}</td>
+                    <td>{grupo.ordenes.map(om => <div key={om.numero}>{om.numero}{detalleOM?.(om.numero) && <small className="detalle-om">{detalleOM(om.numero)}</small>}{onQuitar && <button type="button" className="boton-quitar" aria-label={`Quitar ${om.numero}`} onClick={() => onQuitar([om.numero])}>Quitar</button>}</div>)}
+                      {onQuitar && <button type="button" className="boton-quitar" onClick={() => {
+                        const ordenes = grupo.ordenes.map(om => om.numero)
+                        if (window.confirm(`Quitar tarea ${grupo.tarea}. Se quitarán: ${ordenes.join(', ')}.`)) onQuitar(ordenes)
+                      }}>Quitar tarea {grupo.tarea}</button>}
+                    </td>
                     <td className="descripcion-trabajo">
                       {grupo.original?.descripcion}
                       {grupo.conflictos.length > 0 && <p className="error-campo">Hay ediciones anteriores distintas por OM. Definí un valor común de {grupo.conflictos.join(', ')} para esta tarea.</p>}

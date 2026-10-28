@@ -5,6 +5,10 @@
 ## Propósito
 Interconectar planificación de mantenimiento (PCM) y Taller, gestionar la viabilidad por OM, las decisiones de PCM, la distribución del trabajo y la validación de horas, en una herramienta clara y trazable.
 
+## Validación Taller (iteración 4)
+
+Se implementó la pestaña independiente **Validación Taller** sobre los mismos planes locales: envío PCM, evaluación individual por OM, rechazo con motivo, revisiones, congelamiento al finalizar, respuesta PCM e historial persistente. La preparación conserva la agrupación por tarea; las correcciones individuales se identifican sin cambiar la duración común ni su cálculo. La planificación se bloquea para edición ordinaria al finalizar Taller; las correcciones de rechazadas se habilitan al devolver a revisión. Roles exclusivamente simulados, sin autenticación real. La cancelación de un plan por PCM requiere motivo y confirmación; la cancelación individual de una OM aceptada permanece restringida hasta definir permisos. Véase [alcance, archivos, pruebas y guía de navegador](ITERACION_4_VALIDACION_TALLER.md).
+
 ## Planificaciones locales (iteración 3)
 
 La preparación incluye cabecera con remolcador ficticio obligatorio, fecha de parada válida y horas positivas con decimales. Al crear y guardar se asigna un único identificador incremental: nombre visible «Planificación N» y código «PCM-000N» (relleno mínimo de cuatro dígitos), sin TAG adicional. Estado inicial: Borrador.

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import Planificaciones from './components/Planificaciones'
 
-const paginas = ['Planificación', 'Tareas', 'Personal'] as const
+const paginas = ['Planificación', 'Tareas', 'Validación Taller', 'Personal'] as const
 
 function App() {
   const [paginaActual, setPaginaActual] = useState<typeof paginas[number]>('Planificación')
@@ -42,7 +42,7 @@ function App() {
         )}
         {/* Ambas entradas conservan el mismo espacio de trabajo y la planificación activa. */}
         <section hidden={paginaActual === 'Personal'} aria-label="Planificaciones y preparación de tareas">
-          <Planificaciones />
+          <Planificaciones vistaTaller={paginaActual === 'Validación Taller'} />
         </section>
         {paginaActual === 'Personal' && (
           <p>Gestión y asignación del personal de mantenimiento. Módulo pendiente de una próxima etapa.</p>

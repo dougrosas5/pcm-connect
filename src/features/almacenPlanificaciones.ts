@@ -1,11 +1,34 @@
 import { codigoPlanificacion, erroresDatosGenerales, registroVacio } from './planificaciones.ts'
 import type { Preparacion, RegistroPlanificaciones } from './planificaciones.ts'
+import { estadosPlan, rolesDemo } from './validacionTaller.ts'
 
 export const clavePlanificaciones = 'pcm-connect.planificaciones.v1'
 type Almacen = Pick<Storage, 'getItem' | 'setItem'>
 
 function objeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor)
+}
+
+function datosOMValidos(valor: unknown) {
+  return objeto(valor) && ['descripcion', 'duracionPrevista', 'responsable', 'personas'].every(campo => typeof valor[campo] === 'string')
+    && (valor.costo === undefined || (typeof valor.costo === 'number' && Number.isFinite(valor.costo) && valor.costo >= 0))
+}
+
+function tallerValido(valor: unknown): boolean {
+  if (!objeto(valor) || valor.version !== 1 || !objeto(valor.ordenes) || !Array.isArray(valor.historial)) return false
+  return Object.values(valor.ordenes).every(revision => objeto(revision)
+    && Number.isSafeInteger(revision.revision) && Number(revision.revision) > 0
+    && ['Pendiente', 'Viable', 'No viable'].includes(String(revision.resultado))
+    && typeof revision.motivo === 'string' && (revision.resultado !== 'No viable' || revision.motivo.trim().length > 0)
+    && typeof revision.congelada === 'boolean' && typeof revision.cancelada === 'boolean'
+    && (revision.evaluada === undefined || (Number.isSafeInteger(revision.evaluada) && Number(revision.evaluada) > 0 && Number(revision.evaluada) <= Number(revision.revision)))
+    && (!revision.congelada || (revision.resultado === 'Viable' && revision.evaluada === revision.revision && objeto(revision.datos)))
+    && (revision.datos === undefined || datosOMValidos(revision.datos)))
+    && valor.historial.every(evento => objeto(evento)
+      && ['tipo', 'fecha', 'usuario', 'rol', 'planificacion', 'detalle'].every(campo => typeof evento[campo] === 'string')
+      && Number.isFinite(Date.parse(String(evento.fecha))) && rolesDemo.includes(evento.rol as typeof rolesDemo[number])
+      && ['om', 'anterior', 'nuevo'].every(campo => evento[campo] === undefined || typeof evento[campo] === 'string')
+      && (evento.revision === undefined || (Number.isSafeInteger(evento.revision) && Number(evento.revision) > 0)))
 }
 
 function preparacionValida(valor: unknown): valor is Preparacion {
@@ -36,7 +59,8 @@ function registroValido(valor: unknown): valor is RegistroPlanificaciones {
   const codigos = new Set<string>()
   for (const plan of valor.planificaciones) {
     if (!objeto(plan) || !Number.isSafeInteger(plan.numero) || Number(plan.numero) < 1
-      || plan.codigo !== codigoPlanificacion(Number(plan.numero)) || plan.estado !== 'Borrador'
+      || plan.codigo !== codigoPlanificacion(Number(plan.numero)) || !estadosPlan.includes(plan.estado as typeof estadosPlan[number])
+      || (plan.taller === undefined ? plan.estado !== 'Borrador' : !tallerValido(plan.taller))
       || typeof plan.remolcador !== 'string' || typeof plan.fechaParada !== 'string'
       || typeof plan.horasParada !== 'number' || !preparacionValida(plan.preparacion)
       || Object.values(erroresDatosGenerales({ remolcador: plan.remolcador, fechaParada: plan.fechaParada, horasParada: String(plan.horasParada) })).some(Boolean)
@@ -51,7 +75,8 @@ export function leerPlanificaciones(almacen: Almacen): RegistroPlanificaciones {
   if (texto === null) return registroVacio()
   const valor: unknown = JSON.parse(texto)
   if (!registroValido(valor)) throw new Error('El formato de las planificaciones guardadas no es válido.')
-  // Si el contador quedó atrasado, las identidades guardadas siguen siendo la referencia mínima.
+  // Migración aditiva: los registros v1 sin Taller siguen siendo borradores válidos.
+  // No se inventan eventos históricos ni se reescribe el guardado al leer.
   return { ...valor, ultimoNumero: Math.max(valor.ultimoNumero, ...valor.planificaciones.map(plan => plan.numero)) }
 }
 

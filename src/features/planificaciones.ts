@@ -1,5 +1,7 @@
 import { remolcadoresDemo } from '../data/remolcadores.ts'
 import type { DatosTarea, FilaOM } from './busquedaTareas.ts'
+import { actorPCM, permisos, reconciliarPreparacion, registrarCreacion } from './validacionTaller.ts'
+import type { Actor, EstadoPlan, TallerPlan } from './validacionTaller.ts'
 
 export type Preparacion = {
   entrada: string
@@ -23,8 +25,9 @@ export type Planificacion = {
   remolcador: string
   fechaParada: string
   horasParada: number
-  estado: 'Borrador'
+  estado: EstadoPlan
   preparacion: Preparacion
+  taller?: TallerPlan
 }
 
 export type RegistroPlanificaciones = {
@@ -59,7 +62,8 @@ export function erroresDatosGenerales(datos: DatosGenerales) {
   }
 }
 
-export function crearPlanificacion(registro: RegistroPlanificaciones, datos: DatosGenerales): RegistroPlanificaciones {
+export function crearPlanificacion(registro: RegistroPlanificaciones, datos: DatosGenerales, actor: Actor = actorPCM): RegistroPlanificaciones {
+  if (!permisos(actor).organizar) throw new Error('Solo PCM puede crear planificaciones.')
   if (Object.values(erroresDatosGenerales(datos)).some(Boolean)) throw new Error('Completá los datos generales antes de crear la planificación.')
   const numero = Math.max(registro.ultimoNumero, ...registro.planificaciones.map(plan => plan.numero)) + 1
   if (!Number.isSafeInteger(numero)) throw new Error('Se alcanzó el límite de numeración local.')
@@ -71,16 +75,17 @@ export function crearPlanificacion(registro: RegistroPlanificaciones, datos: Dat
   }
   return {
     ...registro, ultimoNumero: numero, activa: plan.codigo,
-    planificaciones: [...registro.planificaciones, plan], sinPlanificacion: preparacionVacia(),
+    planificaciones: [...registro.planificaciones, registrarCreacion(plan, actor)], sinPlanificacion: preparacionVacia(),
   }
 }
 
-export function actualizarPreparacion(registro: RegistroPlanificaciones, codigo: string | null, cambios: Partial<Preparacion>): RegistroPlanificaciones {
+export function actualizarPreparacion(registro: RegistroPlanificaciones, codigo: string | null, cambios: Partial<Preparacion>, actor: Actor = actorPCM): RegistroPlanificaciones {
+  if (!permisos(actor).organizar) throw new Error('Solo PCM puede editar la preparación.')
   if (codigo === null) return { ...registro, sinPlanificacion: { ...registro.sinPlanificacion, ...cambios } }
   if (!registro.planificaciones.some(plan => plan.codigo === codigo)) throw new Error('La planificación ya no está disponible. Volvé a abrirla.')
   return {
     ...registro,
     planificaciones: registro.planificaciones.map(plan => plan.codigo === codigo
-      ? { ...plan, preparacion: { ...plan.preparacion, ...cambios } } : plan),
+      ? reconciliarPreparacion(plan, { ...plan.preparacion, ...cambios }, actor) : plan),
   }
 }
