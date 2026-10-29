@@ -1,7 +1,7 @@
 # PCM Connect — Graphite Design System (v0.1)
 
 ## Carácter
-Sistema operacional industrial, austero, claro, consistente, sin apariencia de dashboard AI genérico. Diseñar para evaluar OM, escanear tablas y arrastrar trabajos a empleados. Priorizar densidad útil y confianza.
+Sistema operacional industrial, austero, claro y consistente. Diseñar para evaluar OM, escanear tablas y arrastrar trabajos a empleados. Priorizar densidad útil y confianza.
 
 ## Paleta obligatoria
 - Grafito principal / sidebar: `#262626`
@@ -20,6 +20,3 @@ Sistema operacional industrial, austero, claro, consistente, sin apariencia de d
 - Espaciado consistente, bordes finos, radios moderados (4-8px), sin sombras vistosas, sin gradientes, sin iconos decorativos ni movimiento innecesario.
 - Microinteracciones solo para comunicar estado (arrastrando, destino válido, rechazo, confirmación). Respetar prefers-reduced-motion.
 - Usar terminología española coherente (PCM, Taller, OM, escala). Mostrar fechas/horas de Paraguay solo cuando sean relevantes y explícitamente definidas.
-
-## Referencias consultables
-Skills locales de `awesome-design-ops`, `taste-ops` e `impeccable-ops` incluyen ejemplos, pero este documento y el usuario prevalecen siempre. Las referencias de marketing o animación cinematográfica NO justifican introducir GSAP ni secciones AIDA en una aplicación de trabajo.

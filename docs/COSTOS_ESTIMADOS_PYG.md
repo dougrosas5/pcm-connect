@@ -1,6 +1,6 @@
 # Costos referenciales en guaraníes y responsables
 
-Actualización: 17 de octubre de 2026. El usuario autorizó investigar precios públicos y construir estimaciones propias para las OM ficticias de la demo.
+Estimaciones de la demo elaboradas el 17 de octubre de 2026, con referencias públicas y supuestos propios.
 
 ## Referencias consultadas
 
@@ -28,18 +28,4 @@ Los montos son provisiones globales orientativas; no se agrega automáticamente 
 
 Cada costo queda fijo por OM en la base ficticia. Editar la duración o la cantidad de personas no recalcula el presupuesto: no se introdujo una nueva regla de horas-persona. Las OM cerradas continúan excluidas de la preparación y del total.
 
-## Responsables y presentación
-
-- Lista única en `src/data/tareas.ts`: Douglas, Ale y Pepe.
-- Cada OM comienza sin responsable; el usuario debe seleccionarlo. Se valida que el nombre pertenezca a la lista y se conserva al repetir una búsqueda o navegar.
-- El desplegable configura el responsable del borrador; no implementa autenticación ni autorización para asignaciones o validación de horas.
-- Importes mostrados como guaraníes enteros, con separador de miles. El modelo sigue admitiendo costo desconocido y la UI mantiene «Sin definir» y subtotal pendiente.
-- El botón de Planificación se llama «Búsqueda de tareas» y sigue abriendo Tareas.
-
-## Verificación
-
-Ejecutar `npm run build`, `npm run lint`, `npm test` y `git diff --check`.
-
-En el navegador, entrar a Planificación y usar «Búsqueda de tareas». Buscar `1001`: dos OM y total Gs. 720.000. Elegir Douglas en OM-001 y Ale en OM-002; comprobar independencia, cambiar a Pepe y repetir la búsqueda para verificar conservación de los valores. Volver a «Seleccionar responsable» y salir del campo: aparece el error. Agregar `1003`: total Gs. 970.000. Agregar `0010-A`: total Gs. 1.420.000. Buscar `1002 1004 9999`: no se suman OM cerradas ni inexistentes. Revisar desplegable con teclado y a 375 px de ancho.
-
-El caso de costo ausente se mantiene cubierto por una base de prueba específica; todas las OM de la demo principal tienen ahora un costo referencial.
+El responsable se selecciona por tarea entre los nombres ficticios Douglas, Ale y Pepe. La evaluación de Taller conserva los datos individuales de cada OM. Esta selección no implementa autenticación ni autorización real.

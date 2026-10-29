@@ -1,21 +1,21 @@
-# PCM Connect — alcance acordado (versión inicial)
+# PCM Connect — alcance acordado
 
 > Documento de trabajo. Datos ficticios para desarrollo. No contiene conexiones reales a sistemas PCM, ERP ni Taller.
 
 ## Propósito
 Interconectar planificación de mantenimiento (PCM) y Taller, gestionar la viabilidad por OM, las decisiones de PCM, la distribución del trabajo y la validación de horas, en una herramienta clara y trazable.
 
-## Validación Taller (iteración 4)
+## Validación Taller
 
-Se implementó la pestaña independiente **Validación Taller** sobre los mismos planes locales: envío PCM, evaluación individual por OM, rechazo con motivo, revisiones, congelamiento al finalizar, respuesta PCM e historial persistente. La preparación conserva la agrupación por tarea; las correcciones individuales se identifican sin cambiar la duración común ni su cálculo. La planificación se bloquea para edición ordinaria al finalizar Taller; las correcciones de rechazadas se habilitan al devolver a revisión. Roles exclusivamente simulados, sin autenticación real. La cancelación de un plan por PCM requiere motivo y confirmación; la cancelación individual de una OM aceptada permanece restringida hasta definir permisos. Véase [alcance, archivos, pruebas y guía de navegador](ITERACION_4_VALIDACION_TALLER.md).
+Se implementó la pestaña independiente **Validación Taller** sobre los mismos planes locales: envío PCM, evaluación individual por OM, rechazo con motivo, revisiones, congelamiento al finalizar, respuesta PCM e historial persistente. La preparación conserva la agrupación por tarea; las correcciones individuales se identifican sin cambiar la duración común ni su cálculo. La planificación se bloquea para edición ordinaria al finalizar Taller; las correcciones de rechazadas se habilitan al devolver a revisión. Roles exclusivamente simulados, sin autenticación real. La cancelación de un plan por PCM requiere motivo y confirmación; la cancelación individual de una OM aceptada permanece restringida hasta definir permisos. Véase [resumen del desarrollo y verificación](RESUMEN_DESARROLLO.md).
 
-## Planificaciones locales (iteración 3)
+## Planificaciones locales
 
 La preparación incluye cabecera con remolcador ficticio obligatorio, fecha de parada válida y horas positivas con decimales. Al crear y guardar se asigna un único identificador incremental: nombre visible «Planificación N» y código «PCM-000N» (relleno mínimo de cuatro dígitos), sin TAG adicional. Estado inicial: Borrador.
 
-Cada planificación conserva su propia preparación y permite volver a consultarla. El contador histórico no se reduce al quitar planes en futuras iteraciones. La demo guarda planes y contador en `localStorage`; no es persistencia multiusuario. El borrador sin planificación se incorpora una sola vez al crear, conservando las OM y sus ediciones. No se agregan aprobaciones, Kanban ni asignaciones en esta iteración. Véase [detalle y comprobaciones](ITERACION_3_PLANIFICACIONES.md).
+Cada planificación conserva su propia preparación y permite volver a consultarla. El contador histórico no se reduce al quitar planes en futuras iteraciones. La demo guarda planes y contador en `localStorage`; no es persistencia multiusuario. El borrador sin planificación se incorpora una sola vez al crear, conservando las OM y sus ediciones. El Kanban y las asignaciones están pendientes. Véase el [resumen del desarrollo](RESUMEN_DESARROLLO.md).
 
-Corrección posterior acordada: la tabla de preparación muestra una fila por **tarea**, con las OM juntas y una única duración prevista procedente de la tarea, un responsable, personas y un estado comunes. El costo es la suma de las OM abiertas incorporadas; si falta alguno, se indica subtotal o «Sin definir». Los campos comunes se guardan por tarea y planificación, sin borrar las filas de OM existentes. Las ediciones antiguas compatibles se recuperan; si hay valores distintos editados por OM, se solicita definir el valor común sin sobrescribir los originales. Esta corrección actualiza la presentación por OM descrita en las iteraciones anteriores.
+La tabla de preparación muestra una fila por **tarea**, con las OM juntas y una única duración prevista procedente de la tarea, un responsable, personas y un estado comunes. El costo es la suma de las OM abiertas incorporadas; si falta alguno, se indica subtotal o «Sin definir». Los campos comunes se guardan por tarea y planificación, sin borrar las filas de OM existentes. Las ediciones antiguas compatibles se recuperan; si hay valores distintos editados por OM, se solicita definir el valor común sin sobrescribir los originales. La evaluación de viabilidad mantiene una fila por OM.
 
 ## Actores
 - **PCM / organizador**: arma propuestas, ingresa números de tarea, consulta OM y revisa la respuesta de Taller. Decide confirmar, devolver a revisión o cancelar.

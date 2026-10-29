@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local development instructions
+/.agents/
+/.codex/
+/AGENTS.md
+/LEEME_PRIMERO.txt
+/PROMPT_INICIAL_CODEX.md
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example

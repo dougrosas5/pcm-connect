@@ -1,32 +1,52 @@
-# React + TypeScript + Vite
+# PCM Connect
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Aplicación de planificación de mantenimiento y coordinación entre PCM y Taller. Permite preparar trabajos, evaluar la viabilidad de cada orden de mantenimiento (OM) y registrar la decisión de PCM con su historial.
 
-Currently, two official plugins are available:
+## Funciones disponibles
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Búsqueda de varias tareas a la vez, con recuperación de sus OM abiertas, avisos y control de duplicados.
+- Preparación agrupada por tarea, con duración, responsable, cantidad de personas y costos estimados en guaraníes.
+- Creación y consulta de planificaciones con remolcador, fecha de parada y código incremental.
+- Evaluación de Taller por OM, motivos de rechazo, correcciones y revisiones.
+- Confirmación de las OM viables, devolución a revisión o cancelación por PCM.
+- Guardado de planes e historial en el navegador mediante `localStorage`.
 
-## React Compiler
+La versión actual es una demo con datos ficticios y roles simulados. No tiene backend ni autenticación real. Los datos pertenecen al navegador y al origen utilizado; se recomienda trabajar desde una sola pestaña. Las asignaciones de personal y la validación de horas reales están pendientes.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Desarrollo local
 
-## Expanding the Oxlint configuration
+Requisitos: Node.js 24 y npm.
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```sh
+npm ci
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Abrir la dirección indicada por Vite. Para probar la búsqueda, usar `1001 1003 0010-A`; `1002 1004 9999` permite revisar avisos de trabajos cerrados e inexistentes.
+
+## Verificación
+
+```sh
+npm test
+npm run lint
+npm run build
+```
+
+Las pruebas cubren búsqueda, validaciones, persistencia y reglas del flujo PCM–Taller, además del renderizado de componentes. La revisión visual y las interacciones completas en navegador se comprueban manualmente.
+
+## Organización
+
+- `src/components/`: pantallas y formularios.
+- `src/features/`: reglas de negocio y almacenamiento local.
+- `src/data/`: tareas y remolcadores ficticios.
+- `tests/`: pruebas automatizadas.
+- `docs/`: requisitos, diseño y documentación del desarrollo.
+
+Desarrollado con React, TypeScript y Vite; CSS propio y Oxlint.
+
+## Documentación
+
+- [Resumen del desarrollo](docs/RESUMEN_DESARROLLO.md)
+- [Requisitos funcionales](docs/PCM_REQUISITOS.md)
+- [Diseño Graphite](docs/DISEÑO_GRAPHITE.md)
+- [Costos estimados y supuestos](docs/COSTOS_ESTIMADOS_PYG.md)
