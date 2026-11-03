@@ -2,7 +2,13 @@
 
 Aplicación de planificación de mantenimiento y coordinación entre PCM y Taller. Permite preparar trabajos, evaluar la viabilidad de cada orden de mantenimiento (OM) y registrar la decisión de PCM con su historial.
 
-## Funciones disponibles
+## Módulo 1 v1.3
+
+La versión nueva permite preparar tareas/PM con OM de «Valor aprobado», importar `.xlsx`/CSV con revisión de cambios, administrar catálogos, guardar borradores incompletos y enviar propuestas a Taller. Conserva tiempo original/propuesto e historial. Taller evalúa la tarea completa; los trabajos externos no requieren evaluación interna. La demo anterior sigue disponible en **Archivo local**.
+
+Sin configuración funciona como demo local explícita. Incluye una API para Vercel y migración Supabase para autenticación y persistencia multiusuario, que deben habilitarse con la infraestructura autorizada. No se incluyen credenciales. Consultar [funcionamiento, configuración y recorrido de verificación](docs/MODULO_1_V13.md) y el [registro de continuidad](docs/AVANCE_MODULO_1.md).
+
+## Funciones de la demo histórica (Archivo local)
 
 - Búsqueda de varias tareas a la vez, con recuperación de sus OM abiertas, avisos y control de duplicados.
 - Preparación agrupada por tarea, con duración, responsable, cantidad de personas y costos estimados en guaraníes.
@@ -11,7 +17,7 @@ Aplicación de planificación de mantenimiento y coordinación entre PCM y Talle
 - Confirmación de las OM viables, devolución a revisión o cancelación por PCM.
 - Guardado de planes e historial en el navegador mediante `localStorage`.
 
-La versión actual es una demo con datos ficticios y roles simulados. No tiene backend ni autenticación real. Los datos pertenecen al navegador y al origen utilizado; se recomienda trabajar desde una sola pestaña. Las asignaciones de personal y la validación de horas reales están pendientes.
+El archivo histórico es una demo con datos ficticios y roles simulados, sin backend ni autenticación real. Sus datos pertenecen al navegador y al origen utilizado. Las asignaciones de personal y la validación de horas reales siguen pendientes.
 
 ## Cómo descargar y ejecutar en tu computadora
 
@@ -76,9 +82,9 @@ Después entrá a **http://127.0.0.1:5173/**. No hace falta repetir `npm ci` cad
 
 ### Primera prueba
 
-Creá una planificación desde **Planificación**, completando remolcador ficticio, fecha y horas. Buscá `1001 1003 0010-A` para incorporar trabajos abiertos. Podés buscar `1002 1004 9999` para revisar avisos de tareas cerradas o inexistentes. Completá los campos de preparación y usá **Enviar a Taller**. En **Validación Taller**, cambiá el selector de rol simulado para probar la evaluación por OM y la respuesta de PCM.
+En el nuevo módulo seleccioná Administrador demo, creá un remolcador y ubicación ficticios en **Catálogos** y volvé a **Planificación**. Revisá/confirmá el ejemplo ficticio en el importador, buscá `DEMO-1001 DEMO-PM-02`, completá cabecera, trabajadores y responsables y guardá el borrador. Al enviar, **Validación Taller** recibe tareas completas. El recorrido detallado está en [Módulo 1 v1.3](docs/MODULO_1_V13.md).
 
-**Cada compañero tendrá sus propios datos locales.** Las planificaciones no se sincronizan entre computadoras ni entre navegadores. Usá siempre la misma dirección, navegador y perfil para recuperar lo guardado. Evitá el modo incógnito y no borres los datos del sitio si querés conservar las planificaciones.
+**En modo demo cada compañero tiene sus propios datos locales.** Para sincronizar planes entre equipos hay que configurar el servidor según la documentación v1.3. Usá siempre la misma dirección, navegador y perfil para recuperar los datos locales. Evitá el modo incógnito y no borres los datos del sitio si querés conservarlos.
 
 ### Si algo no funciona
 

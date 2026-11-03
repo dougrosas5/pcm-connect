@@ -1,5 +1,7 @@
 # PCM Connect — alcance acordado
 
+> **Versión vigente del Módulo 1: v1.3 (03/11/2026).** Consultar [Módulo 1 v1.3](MODULO_1_V13.md). El pedido nuevo sustituye las reglas anteriores: OM con «Valor aprobado», propuesta agrupada por tarea/PM, evaluación de tarea completa, responsables internos/externos, catálogos e integración de servidor. Las secciones siguientes documentan la demo histórica y las etapas posteriores; no deben imponerse sobre el contrato v1.3. Los datos anteriores siguen en Archivo local.
+
 > Documento de trabajo. Datos ficticios para desarrollo. No contiene conexiones reales a sistemas PCM, ERP ni Taller.
 
 ## Propósito

@@ -13,7 +13,7 @@ Sistema operacional industrial, austero, claro y consistente. Diseñar para eval
 
 ## Principios
 - Navegación lateral firme y discreta. No sustituir por landing page.
-- Tablas de OM compactas, encabezados legibles y columnas alineadas; filas por OM.
+- Tablas compactas, encabezados legibles y columnas alineadas. En Módulo 1 v1.3, una fila por tarea/PM con OM agrupadas; el archivo de la demo conserva sus filas por OM.
 - Filtros simples, vista de contenido predecible, estados vacíos/error explícitos y acciones visibles.
 - Tarjetas de trabajador escaneables: nombre, legajo, carga asignada, horas validadas, pendientes, OM actuales y alertas.
 - Inputs con labels y ayudas, navegación con teclado, foco visible, targets cómodos, contraste y responsive funcional.

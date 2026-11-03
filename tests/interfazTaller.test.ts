@@ -11,7 +11,7 @@ import { actorPCM, decidirPCM, enviarATaller, evaluarOM, finalizarEvaluacion, ro
 // Render real de los componentes con Vite/React, sin agregar un emulador de DOM.
 // Comprueba la interfaz generada; no sustituye pruebas de interacción en navegador.
 test('React renderiza navegación, vacío, permisos, resumen, decisiones e historial sin errores', async () => {
-  const vite = await createServer({ server: { middlewareMode: true, hmr: false }, appType: 'custom' })
+  const vite = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
   try {
     const { default: ValidacionTaller } = await vite.ssrLoadModule('/src/components/ValidacionTaller.tsx')
     const { default: App } = await vite.ssrLoadModule('/src/App.tsx')

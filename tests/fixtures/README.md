@@ -1,0 +1,1 @@
+`modulo1-ficticio.xlsx` es un XLSX mínimo creado para estas pruebas con ZIP/XML estándar. Contiene solo datos ficticios: tarea `0010-A`, dos OM con «Valor aprobado» y una cerrada. No incluye macros, fórmulas, datos personales ni información de la empresa. También puede usarse para comprobar manualmente el importador.
