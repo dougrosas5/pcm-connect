@@ -130,7 +130,7 @@ const atender = crearHandler(() => ({
   clave: process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
 }))
 
-// Adaptador Node tradicional de Vercel. La lógica HTTP de negocio sigue usando Request/Response.
+// Fuente tipada del adaptador Node. scripts/build-api.mjs genera la función autocontenida para Vercel.
 export default async function handler(req: IncomingMessage & { body?: unknown }, res: ServerResponse) {
   try {
     const headers = new Headers()

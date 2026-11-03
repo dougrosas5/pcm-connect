@@ -31,7 +31,7 @@ Actualizado: 03/11/2026. Pedido original: adjunto `Pasted text.txt` de esta conv
 
 - `src/features/modulo1/`: contrato v1.3, validación compartida, lectura XLSX/CSV, repositorio local/servidor y autenticación.
 - `src/components/modulo1/`: cabecera, tabla con nueve columnas, importaciones revisables, catálogos, recepción Taller e historial. `App.tsx` integra navegación y conserva Archivo local.
-- `api/pcm.ts`: API autenticada para Vercel. `vite.config.ts` sirve la misma API durante desarrollo.
+- `server/pcm.ts`: fuente de la API autenticada. `scripts/build-api.mjs` empaqueta con Vite en `api/pcm.mjs`, archivo generado versionado para Vercel. No editar el bundle manualmente. `vite.config.ts` sirve la misma lógica durante desarrollo.
 - `supabase/migrations/202611030001_modulo1.sql`: tablas nuevas, perfiles, RLS y transacción con comparación de versión y recibos idempotentes.
 - `.env.example` y `docs/MODULO_1_V13.md`: configuración, decisiones, límites y recorrido manual.
 - Dependencias: `read-excel-file` para XLSX; PGlite y happy-dom exclusivamente para pruebas. No se añadieron bibliotecas visuales.
@@ -41,7 +41,7 @@ Actualizado: 03/11/2026. Pedido original: adjunto `Pasted text.txt` de esta conv
 
 - `npm run build`: correcto, incluye TypeScript del cliente, configuración y API.
 - `npm run lint`: correcto.
-- `npm test`: 70 pruebas correctas, incluidas las 48 originales, pruebas de sesión/renovación/cierre HTTP 204 y el adaptador Node por HTTP real.
+- `npm test`: 71 pruebas correctas, incluidas las 48 originales, pruebas de sesión/renovación/cierre HTTP 204, el adaptador Node y el bundle publicado por HTTP real.
 - `npm audit`: cero vulnerabilidades.
 - Flujo React probado en DOM simulado: catálogo → importación → edición → guardado → recuperación → limpieza confirmada → reapertura → doble clic en envío → evaluación de tarea interna → Evaluado; tercerizada preservada.
 - PostgreSQL WASM ejecutó la migración real: dos solicitudes concurrentes no comparten TAG, una versión obsoleta no sobrescribe y el mismo recibo no duplica plan/eventos. Roles anon/authenticated no acceden directamente a tablas/RPC.
@@ -59,11 +59,11 @@ Actualizado: 03/11/2026. Pedido original: adjunto `Pasted text.txt` de esta conv
 
 ## Siguiente paso exacto
 
-Revisar `git status`, ejecutar comprobaciones finales tras cualquier cambio, crear el commit exacto `primera pagina PCM`, subir `main` sin force y consultar su estado Vercel. Si ya está hecho al retomar, obtener el hash con `git log -1 --format=fuller`, comparar con `git ls-remote origin main` y continuar desde ese commit; **no repetir la implementación**. Después habilitar la infraestructura pendiente siguiendo `docs/MODULO_1_V13.md` y completar las verificaciones de navegador/servidor real.
+El commit solicitado ya está creado y subido: no repetirlo ni rehacer la implementación. Obtener el HEAD actual con `git log -1 --format=fuller`, comparar con `git ls-remote origin main` y consultar su estado Vercel. Cada cambio de la fuente de servidor requiere `npm run build` para regenerar `api/pcm.mjs`, y las pruebas detectan un bundle obsoleto. Después habilitar la infraestructura pendiente siguiendo `docs/MODULO_1_V13.md` y completar las verificaciones de navegador/servidor real.
 
 ## Publicación y corrección posterior
 
 - Commit solicitado creado y subido: `ea2259468abee484e74c378a73c674e44f953a29`, mensaje exacto `primera pagina PCM`, rama `main`.
 - Vercel confirmó estado `success` para ese commit en el proyecto existente. Dashboard: https://vercel.com/douglas-nomad/pcm-connect/7w6Fkn8CB2M2wt62C1hL446PRmoV.
 - URL de producción obtenida de la metadata del repositorio: https://pcm-connect-lac.vercel.app. HTTP 200 y HTML idéntico a `dist/index.html` (mismos hashes de JS/CSS).
-- La comprobación adicional de `/api/pcm` detectó `FUNCTION_INVOCATION_FAILED` (500). Se adapta la entrada a la firma Node tradicional de Vercel; la lógica autenticada y las reglas de negocio no cambian. Falta verificar el nuevo despliegue de esta corrección. No confundir éxito del frontend con funcionamiento del backend.
+- La comprobación adicional de `/api/pcm` detectó `FUNCTION_INVOCATION_FAILED` (500). Cambiar solo el adaptador HTTP no resolvió la carga en producción (`e380653`). Se publica ahora una función JavaScript autocontenida, generada con Vite, para eliminar la dependencia de la compilación implícita de TypeScript del hosting. La prueba del bundle exacto pasa localmente y comprueba que corresponde a las fuentes. Verificar el nuevo despliegue; no confundir éxito del frontend con funcionamiento del backend.

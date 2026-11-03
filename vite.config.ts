@@ -1,6 +1,6 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv } from 'vite'
-import { crearHandler } from './api/pcm.ts'
+import { crearHandler } from './server/pcm.ts'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
