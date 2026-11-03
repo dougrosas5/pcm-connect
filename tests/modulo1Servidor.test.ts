@@ -2,9 +2,41 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
-import { crearHandler } from '../api/pcm.ts'
+import nodeHandler, { crearHandler } from '../api/pcm.ts'
+import { createServer } from 'node:http'
 import { nuevoPlan } from '../src/features/modulo1/modelo.ts'
 import type { Actor, Comando, Registro } from '../src/features/modulo1/modelo.ts'
+
+test('adaptador Node de Vercel responde por HTTP sin configuración y sin sesión', async () => {
+  const urlAnterior = process.env.SUPABASE_URL
+  const claveAnterior = process.env.SUPABASE_SERVICE_ROLE_KEY
+  delete process.env.SUPABASE_URL
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY
+  const servidor = createServer((req, res) => {
+    void nodeHandler(req, res)
+  })
+  await new Promise<void>((resolve) => servidor.listen(0, '127.0.0.1', resolve))
+  try {
+    const direccion = servidor.address() as { port: number }
+    const url = `http://127.0.0.1:${direccion.port}/api/pcm`
+    const sinConfig = await fetch(url)
+    assert.equal(sinConfig.status, 503)
+    assert.match((await sinConfig.json()).message, /SUPABASE_URL/u)
+    process.env.SUPABASE_URL = 'https://base-ficticia.invalid'
+    process.env.SUPABASE_SERVICE_ROLE_KEY = 'clave-ficticia'
+    const sinSesion = await fetch(url, { method: 'POST', body: '{}' })
+    assert.equal(sinSesion.status, 401)
+    assert.match((await sinSesion.json()).message, /Iniciá sesión/u)
+  } finally {
+    await new Promise<void>((resolve, reject) =>
+      servidor.close((error) => (error ? reject(error) : resolve()))
+    )
+    if (urlAnterior === undefined) delete process.env.SUPABASE_URL
+    else process.env.SUPABASE_URL = urlAnterior
+    if (claveAnterior === undefined) delete process.env.SUPABASE_SERVICE_ROLE_KEY
+    else process.env.SUPABASE_SERVICE_ROLE_KEY = claveAnterior
+  }
+})
 
 // PostgreSQL real compilado a WASM. Solo Supabase Auth/REST se sustituye por un transporte de pruebas.
 test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempotencia', async (t) => {

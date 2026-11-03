@@ -1,6 +1,7 @@
 import { aplicarComando } from '../src/features/modulo1/modelo.ts'
 import type { Actor, Comando, Registro, Rol } from '../src/features/modulo1/modelo.ts'
 import { validarComando } from '../src/features/modulo1/validacion.ts'
+import type { IncomingMessage, ServerResponse } from 'node:http'
 
 type Configuracion = { url: string; clave: string }
 function respuesta(datos: unknown, estado = 200) {
@@ -124,9 +125,49 @@ export function crearHandler(configuracion: () => Configuracion, solicitar: type
   }
 }
 
-export default {
-  fetch: crearHandler(() => ({
-    url: (process.env.SUPABASE_URL ?? '').replace(/\/$/u, ''),
-    clave: process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
-  }))
+const atender = crearHandler(() => ({
+  url: (process.env.SUPABASE_URL ?? '').replace(/\/$/u, ''),
+  clave: process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+}))
+
+// Adaptador Node tradicional de Vercel. La lógica HTTP de negocio sigue usando Request/Response.
+export default async function handler(req: IncomingMessage & { body?: unknown }, res: ServerResponse) {
+  try {
+    const headers = new Headers()
+    for (const [clave, valor] of Object.entries(req.headers)) {
+      if (valor) headers.set(clave, Array.isArray(valor) ? valor.join(',') : valor)
+    }
+    let cuerpo: string | undefined
+    if (!['GET', 'HEAD'].includes(req.method ?? 'GET')) {
+      if (req.body !== undefined) cuerpo = typeof req.body === 'string' ? req.body : JSON.stringify(req.body)
+      else {
+        const partes: Buffer[] = []
+        let bytes = 0
+        for await (const parte of req) {
+          const buffer = Buffer.from(parte)
+          bytes += buffer.length
+          if (bytes > 3_000_000) {
+            res.writeHead(413, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ message: 'La solicitud es demasiado grande.' }))
+            return
+          }
+          partes.push(buffer)
+        }
+        cuerpo = Buffer.concat(partes).toString('utf8')
+      }
+    }
+    const resultado = await atender(
+      new Request('http://localhost/api/pcm', {
+        method: req.method,
+        headers,
+        ...(cuerpo === undefined ? {} : { body: cuerpo })
+      })
+    )
+    res.statusCode = resultado.status
+    resultado.headers.forEach((valor, clave) => res.setHeader(clave, valor))
+    res.end(await resultado.text())
+  } catch {
+    res.writeHead(503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' })
+    res.end(JSON.stringify({ message: 'No se pudo atender la API. Revisá la configuración del servidor.' }))
+  }
 }

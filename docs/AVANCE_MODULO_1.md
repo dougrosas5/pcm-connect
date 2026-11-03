@@ -41,7 +41,7 @@ Actualizado: 03/11/2026. Pedido original: adjunto `Pasted text.txt` de esta conv
 
 - `npm run build`: correcto, incluye TypeScript del cliente, configuración y API.
 - `npm run lint`: correcto.
-- `npm test`: 69 pruebas correctas, incluidas las 48 originales y pruebas de sesión/renovación/cierre HTTP 204.
+- `npm test`: 70 pruebas correctas, incluidas las 48 originales, pruebas de sesión/renovación/cierre HTTP 204 y el adaptador Node por HTTP real.
 - `npm audit`: cero vulnerabilidades.
 - Flujo React probado en DOM simulado: catálogo → importación → edición → guardado → recuperación → limpieza confirmada → reapertura → doble clic en envío → evaluación de tarea interna → Evaluado; tercerizada preservada.
 - PostgreSQL WASM ejecutó la migración real: dos solicitudes concurrentes no comparten TAG, una versión obsoleta no sobrescribe y el mismo recibo no duplica plan/eventos. Roles anon/authenticated no acceden directamente a tablas/RPC.
@@ -60,3 +60,10 @@ Actualizado: 03/11/2026. Pedido original: adjunto `Pasted text.txt` de esta conv
 ## Siguiente paso exacto
 
 Revisar `git status`, ejecutar comprobaciones finales tras cualquier cambio, crear el commit exacto `primera pagina PCM`, subir `main` sin force y consultar su estado Vercel. Si ya está hecho al retomar, obtener el hash con `git log -1 --format=fuller`, comparar con `git ls-remote origin main` y continuar desde ese commit; **no repetir la implementación**. Después habilitar la infraestructura pendiente siguiendo `docs/MODULO_1_V13.md` y completar las verificaciones de navegador/servidor real.
+
+## Publicación y corrección posterior
+
+- Commit solicitado creado y subido: `ea2259468abee484e74c378a73c674e44f953a29`, mensaje exacto `primera pagina PCM`, rama `main`.
+- Vercel confirmó estado `success` para ese commit en el proyecto existente. Dashboard: https://vercel.com/douglas-nomad/pcm-connect/7w6Fkn8CB2M2wt62C1hL446PRmoV.
+- URL de producción obtenida de la metadata del repositorio: https://pcm-connect-lac.vercel.app. HTTP 200 y HTML idéntico a `dist/index.html` (mismos hashes de JS/CSS).
+- La comprobación adicional de `/api/pcm` detectó `FUNCTION_INVOCATION_FAILED` (500). Se adapta la entrada a la firma Node tradicional de Vercel; la lógica autenticada y las reglas de negocio no cambian. Falta verificar el nuevo despliegue de esta corrección. No confundir éxito del frontend con funcionamiento del backend.
