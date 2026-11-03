@@ -31,6 +31,7 @@ dist-ssr
 /PROMPT_INICIAL_CODEX.md
 
 # Local configuration and credentials
+.vercel/
 .env
 .env.*
 !.env.example

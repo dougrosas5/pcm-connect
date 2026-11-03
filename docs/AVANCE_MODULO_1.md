@@ -52,7 +52,7 @@ Actualizado: 03/11/2026. Pedido original: adjunto `Pasted text.txt` de esta conv
 
 - GitHub tiene una integración Vercel anterior exitosa para **douglas-nomad/pcm-connect** (deployment `DCkGCV2cJjYKgnB673qmP6MjnBSC`). No crear otro proyecto.
 - `npx --yes vercel@latest whoami` (CLI 65.11.0): **Logged out**. No hay vínculo `.vercel`, variables Supabase ni credenciales de servidor locales.
-- Se encontró Vercel en el directorio de plugins y se ofreció conectarlo; aún no hay conexión confirmada. El push puede activar la integración Git existente: comprobar el estado del commit en GitHub antes de informar despliegue.
+- Se encontró Vercel en el directorio de plugins y se ofreció conectarlo; aún no hay conexión confirmada. La integración Git existente sí publica los pushes y sus estados se verificaron mediante GitHub; no es necesario crear otro proyecto.
 - No se aplicó la migración a una cuenta Supabase real ni se crearon usuarios. El propietario confirmó preparar Supabase; faltan proyecto/credenciales, variables y perfiles. El modo disponible sin esas variables es demo local.
 - La revisión visual de navegador no se completó. El host de navegador estaba indisponible; Computer Use se detuvo porque no pudo verificar con confianza la URL de Brave. No se intentó eludir ese control. Las pruebas happy-dom no sustituyen inspección visual/responsive.
 - Solo estaba adjunto el texto del pedido, sin imágenes de referencia.
@@ -66,4 +66,15 @@ El commit solicitado ya está creado y subido: no repetirlo ni rehacer la implem
 - Commit solicitado creado y subido: `ea2259468abee484e74c378a73c674e44f953a29`, mensaje exacto `primera pagina PCM`, rama `main`.
 - Vercel confirmó estado `success` para ese commit en el proyecto existente. Dashboard: https://vercel.com/douglas-nomad/pcm-connect/7w6Fkn8CB2M2wt62C1hL446PRmoV.
 - URL de producción obtenida de la metadata del repositorio: https://pcm-connect-lac.vercel.app. HTTP 200 y HTML idéntico a `dist/index.html` (mismos hashes de JS/CSS).
-- La comprobación adicional de `/api/pcm` detectó `FUNCTION_INVOCATION_FAILED` (500). Cambiar solo el adaptador HTTP no resolvió la carga en producción (`e380653`). Se publica ahora una función JavaScript autocontenida, generada con Vite, para eliminar la dependencia de la compilación implícita de TypeScript del hosting. La prueba del bundle exacto pasa localmente y comprueba que corresponde a las fuentes. Verificar el nuevo despliegue; no confundir éxito del frontend con funcionamiento del backend.
+- La comprobación adicional de `/api/pcm` detectó `FUNCTION_INVOCATION_FAILED` (500). Cambiar solo el adaptador HTTP no resolvió la carga en producción (`e380653`). La función JavaScript autocontenida, generada con Vite, corrigió el fallo observado. La prueba del bundle exacto pasa localmente y comprueba que corresponde a las fuentes.
+
+## Resultado verificado para continuar
+
+- Implementación, correcciones y documentación subidas a `main`, sin force ni cambios de remoto. El árbol de trabajo se deja limpio al cerrar.
+- Versión funcional del empaquetado: `2c7c8ffc8d6478ca75a92f80c6723be3fe078077` (`Empaqueta API de PCM para ejecucion en Vercel`). El commit solicitado `primera pagina PCM` permanece intacto en `ea2259468abee484e74c378a73c674e44f953a29`.
+- Vercel confirmó `success` del empaquetado: https://vercel.com/douglas-nomad/pcm-connect/8oewoaLGYTSgBbLcf6f9pc1gJtrV.
+- Producción https://pcm-connect-lac.vercel.app: **HTTP 200**, HTML y hashes JS/CSS coincidentes con el build local.
+- Producción `/api/pcm`: **HTTP 503 con JSON controlado** `Servidor sin configurar: faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY.`. Ya no devuelve `FUNCTION_INVOCATION_FAILED`. Este resultado verifica la ejecución de la función, no una conexión a base de datos.
+- Comprobaciones finales: build y lint correctos, **71 pruebas aprobadas**, auditoría sin vulnerabilidades. Las pruebas cubren DOM simulado, CSV/XLSX, reglas compartidas, PostgreSQL WASM, API HTTP, sesión y el bundle exacto publicado.
+- Próxima iteración: configurar proyecto Supabase autorizado, aplicar migración, crear perfiles y variables según `.env.example`, redesplegar en el mismo Vercel y verificar login/persistencia real entre navegadores. Completar revisión visual/responsive cuando vuelva a estar disponible el control de navegador.
+- No rehacer el módulo, no borrar la clave v1 y no repetir el commit solicitado. Verificar `git log -4 --oneline` y el HEAD remoto antes de continuar.

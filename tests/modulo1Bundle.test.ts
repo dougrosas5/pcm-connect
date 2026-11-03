@@ -13,7 +13,11 @@ test('bundle publicado: autocontenido, actualizado y ejecutable en Node por HTTP
   )
   const publicado = await readFile(new URL('../api/pcm.mjs', import.meta.url), 'utf8')
   assert.ok(chunk)
-  assert.equal(publicado, chunk.code, 'Regenerar api/pcm.mjs con npm run build antes de publicar.')
+  assert.equal(
+    publicado.replace(/\r\n/gu, '\n'),
+    chunk.code.replace(/\r\n/gu, '\n'),
+    'Regenerar api/pcm.mjs con npm run build antes de publicar.'
+  )
   assert.ok(!/from\s+["']\./u.test(publicado), 'El bundle no debe importar archivos fuente relativos.')
   const anteriorUrl = process.env.SUPABASE_URL
   const anteriorClave = process.env.SUPABASE_SERVICE_ROLE_KEY
