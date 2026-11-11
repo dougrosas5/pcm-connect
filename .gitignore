@@ -35,3 +35,9 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Informes, respaldos y continuidad local de agentes; nunca publicar.
+/.codex-outputs/
+*.tmp
+*.temp
+*.tsbuildinfo

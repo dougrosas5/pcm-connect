@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { responsablesPreparacion, tareasDemo } from '../src/data/tareas.ts'
-import { agruparPorTarea, buscarTareas, datosDeTarea, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../src/features/busquedaTareas.ts'
+import { responsablesPreparacion, tareasDemo } from '../src/features/archivo-local/data/tareas.ts'
+import { agruparPorTarea, buscarTareas, datosDeTarea, errorDuracion, errorPersonas, errorResponsable, resumirCostos } from '../src/features/archivo-local/model/busquedaTareas.ts'
 
 test('separa comas, espacios y saltos de línea, preservando ceros y guiones', () => {
   const resultado = buscarTareas('1001,\t1003\n0010-A', tareasDemo, [])

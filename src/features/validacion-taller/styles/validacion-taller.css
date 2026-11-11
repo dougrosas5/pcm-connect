@@ -1,0 +1,11 @@
+.m2 { margin-block: 20px; }
+.m2-indicadores { display: flex; flex-wrap: wrap; gap: 16px 32px; padding-block: 16px; border-block: 1px solid var(--borde); }
+.m2-indicadores dt, .m2-datos dt { font-size: 13px; color: var(--texto-secundario-legible); }
+.m2-indicadores dd, .m2-datos dd { margin: 5px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.m2-bandeja { min-width: 1450px; }
+.m2-bandeja td { max-width: 220px; }
+.m2-editor { border-top: 1px solid var(--borde); margin-top: 20px; padding-top: 4px; }
+.m2-editor button { margin-top: 14px; }
+.m2 button[aria-pressed='true'] { background: var(--grafito); color: var(--superficie); border-color: var(--grafito); }
+.m2 textarea { min-height: 80px; resize: vertical; }
+.m2-datos { margin-block: 20px; }

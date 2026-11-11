@@ -4,9 +4,9 @@ Aplicación de planificación de mantenimiento y coordinación entre PCM y Talle
 
 ## Módulo 1 v1.3
 
-La versión nueva permite preparar tareas/PM con OM de «Valor aprobado», importar `.xlsx`/CSV con revisión de cambios, administrar catálogos, guardar borradores incompletos y enviar propuestas a Taller. Conserva tiempo original/propuesto e historial. Taller evalúa la tarea completa; los trabajos externos no requieren evaluación interna. La demo anterior sigue disponible en **Archivo local**.
+La versión nueva permite preparar tareas/PM con OM de «Valor aprobado», importar `.xlsx`/CSV con revisión de cambios, administrar catálogos, guardar borradores con ETA y enviar propuestas a Taller. Conserva tiempo original/propuesto e historial. **Validación Taller** muestra bandeja, detalle y cambios auditados de ETA; las nuevas decisiones de evaluación están pendientes de definición. La demo anterior sigue disponible en **Archivo local**.
 
-Sin configuración funciona como demo local explícita. Incluye una API para Vercel y migración Supabase para autenticación y persistencia multiusuario, que deben habilitarse con la infraestructura autorizada. No se incluyen credenciales. Consultar [funcionamiento, configuración y recorrido de verificación](docs/MODULO_1_V13.md) y el [registro de continuidad](docs/AVANCE_MODULO_1.md).
+Sin configuración funciona como demo local explícita. Incluye una API para Vercel y migraciones Supabase para autenticación y persistencia multiusuario, que deben habilitarse con la infraestructura autorizada. No se incluyen credenciales. Consultar [configuración de servidor](docs/MODULO_1_V13.md), [Validación Taller y ETA](docs/VALIDACION_TALLER.md) y [arquitectura](docs/ARQUITECTURA.md).
 
 ## Funciones de la demo histórica (Archivo local)
 
@@ -109,17 +109,21 @@ Las pruebas cubren búsqueda, validaciones, persistencia y reglas del flujo PCM�
 
 ## Organización
 
-- `src/components/`: pantallas y formularios.
-- `src/features/`: reglas de negocio y almacenamiento local.
-- `src/data/`: tareas y remolcadores ficticios.
+- `src/app/`: navegación, composición y estado compartido.
+- `src/features/`: Planificación, Catálogos, Validación Taller y Archivo local, con componentes y reglas propios.
+- `src/components/`: componentes compartidos.
+- `src/services/pcm/`: persistencia y sesión.
+- `src/types/`: contrato compartido; `src/utils/`: utilidades; `src/styles/`: CSS global.
 - `tests/`: pruebas automatizadas.
-- `docs/`: requisitos, diseño y documentación del desarrollo.
+- `docs/`: requisitos, diseño y guías técnicas permanentes.
+- `.codex-outputs/`: continuidad e informes locales de agentes, excluidos de Git y Vercel.
 
 Desarrollado con React, TypeScript y Vite; CSS propio y Oxlint.
 
 ## Documentación
 
-- [Resumen del desarrollo](docs/RESUMEN_DESARROLLO.md)
+- [Arquitectura y responsabilidades](docs/ARQUITECTURA.md)
+- [Validación Taller y ETA](docs/VALIDACION_TALLER.md)
 - [Requisitos funcionales](docs/PCM_REQUISITOS.md)
 - [Diseño Graphite](docs/DISEÑO_GRAPHITE.md)
 - [Costos estimados y supuestos](docs/COSTOS_ESTIMADOS_PYG.md)

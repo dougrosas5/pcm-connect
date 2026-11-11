@@ -1,5 +1,7 @@
 # Módulo 1 — Planificación de tareas v1.3
 
+> Guía del contrato v1.3. Para la bandeja actual, ETA y restricciones de evaluación consultar [Validación Taller](VALIDACION_TALLER.md). La primera creación exige ETA; las decisiones nuevas de aceptación/rechazo no están habilitadas. La ubicación y responsabilidad del código están en [Arquitectura](ARQUITECTURA.md). Los recorridos de evaluación siguientes describen la recepción histórica, conservada sin reactivar.
+
 Esta especificación y el pedido v1.3 del propietario reemplazan las reglas anteriores que contradigan el nuevo Módulo 1. La demo anterior permanece en **Archivo local**, con sus datos y pruebas originales, sin mezclar evaluaciones ni convertir automáticamente OM abiertas en OM con valor aprobado.
 
 ## Funcionamiento

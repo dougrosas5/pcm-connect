@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer } from 'vite'
-import { registroInicial } from '../src/features/modulo1/modelo.ts'
+import { registroInicial } from '../src/features/planificacion/model/modelo.ts'
 
 test('v1.3 sesión: identidad, renovación, cierre HTTP 204 y errores sin fallback local', async () => {
   const fetchOriginal = globalThis.fetch
@@ -52,7 +52,7 @@ test('v1.3 sesión: identidad, renovación, cierre HTTP 204 y errores sin fallba
     appType: 'custom'
   })
   try {
-    const repositorio = await vite.ssrLoadModule('/src/features/modulo1/persistencia.ts')
+    const repositorio = await vite.ssrLoadModule('/src/services/pcm/persistencia.ts')
     assert.equal(repositorio.conectado, true)
     await repositorio.iniciarSesion('usuario@example.invalid', 'contraseña-completamente-ficticia')
     assert.equal((await repositorio.cargar()).actor.rol, 'Consulta')

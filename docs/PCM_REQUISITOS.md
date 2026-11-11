@@ -1,5 +1,7 @@
 # PCM Connect — alcance acordado
 
+> **Módulo 2, primera iteración (10/11/2026):** [Validación Taller y ETA](VALIDACION_TALLER.md) incorpora bandeja, filtros, detalle y cambios auditados de ETA sobre los mismos planes v1.3. La ETA inicial queda fija al crear; `eta` es la ETA final operativa. El nuevo pedido deja pendientes la unidad de evaluación (tarea/OM) y la resolución de rechazos: no imponer las reglas históricas siguientes sobre el nuevo módulo. Programación, capacidad y cierre continúan pendientes.
+
 > **Versión vigente del Módulo 1: v1.3 (03/11/2026).** Consultar [Módulo 1 v1.3](MODULO_1_V13.md). El pedido nuevo sustituye las reglas anteriores: OM con «Valor aprobado», propuesta agrupada por tarea/PM, evaluación de tarea completa, responsables internos/externos, catálogos e integración de servidor. Las secciones siguientes documentan la demo histórica y las etapas posteriores; no deben imponerse sobre el contrato v1.3. Los datos anteriores siguen en Archivo local.
 
 > Documento de trabajo. Datos ficticios para desarrollo. No contiene conexiones reales a sistemas PCM, ERP ni Taller.
@@ -9,13 +11,13 @@ Interconectar planificación de mantenimiento (PCM) y Taller, gestionar la viabi
 
 ## Validación Taller
 
-Se implementó la pestaña independiente **Validación Taller** sobre los mismos planes locales: envío PCM, evaluación individual por OM, rechazo con motivo, revisiones, congelamiento al finalizar, respuesta PCM e historial persistente. La preparación conserva la agrupación por tarea; las correcciones individuales se identifican sin cambiar la duración común ni su cálculo. La planificación se bloquea para edición ordinaria al finalizar Taller; las correcciones de rechazadas se habilitan al devolver a revisión. Roles exclusivamente simulados, sin autenticación real. La cancelación de un plan por PCM requiere motivo y confirmación; la cancelación individual de una OM aceptada permanece restringida hasta definir permisos. Véase [resumen del desarrollo y verificación](RESUMEN_DESARROLLO.md).
+Se implementó la pestaña independiente **Validación Taller** sobre los mismos planes locales: envío PCM, evaluación individual por OM, rechazo con motivo, revisiones, congelamiento al finalizar, respuesta PCM e historial persistente. La preparación conserva la agrupación por tarea; las correcciones individuales se identifican sin cambiar la duración común ni su cálculo. La planificación se bloquea para edición ordinaria al finalizar Taller; las correcciones de rechazadas se habilitan al devolver a revisión. Roles exclusivamente simulados, sin autenticación real. La cancelación de un plan por PCM requiere motivo y confirmación; la cancelación individual de una OM aceptada permanece restringida hasta definir permisos. Véase la separación de contratos en [Arquitectura](ARQUITECTURA.md).
 
 ## Planificaciones locales
 
 La preparación incluye cabecera con remolcador ficticio obligatorio, fecha de parada válida y horas positivas con decimales. Al crear y guardar se asigna un único identificador incremental: nombre visible «Planificación N» y código «PCM-000N» (relleno mínimo de cuatro dígitos), sin TAG adicional. Estado inicial: Borrador.
 
-Cada planificación conserva su propia preparación y permite volver a consultarla. El contador histórico no se reduce al quitar planes en futuras iteraciones. La demo guarda planes y contador en `localStorage`; no es persistencia multiusuario. El borrador sin planificación se incorpora una sola vez al crear, conservando las OM y sus ediciones. El Kanban y las asignaciones están pendientes. Véase el [resumen del desarrollo](RESUMEN_DESARROLLO.md).
+Cada planificación conserva su propia preparación y permite volver a consultarla. El contador histórico no se reduce al quitar planes en futuras iteraciones. La demo guarda planes y contador en `localStorage`; no es persistencia multiusuario. El borrador sin planificación se incorpora una sola vez al crear, conservando las OM y sus ediciones. El Kanban y las asignaciones están pendientes. Véase la organización del Archivo local en [Arquitectura](ARQUITECTURA.md).
 
 La tabla de preparación muestra una fila por **tarea**, con las OM juntas y una única duración prevista procedente de la tarea, un responsable, personas y un estado comunes. El costo es la suma de las OM abiertas incorporadas; si falta alguno, se indica subtotal o «Sin definir». Los campos comunes se guardan por tarea y planificación, sin borrar las filas de OM existentes. Las ediciones antiguas compatibles se recuperan; si hay valores distintos editados por OM, se solicita definir el valor común sin sobrescribir los originales. La evaluación de viabilidad mantiene una fila por OM.
 

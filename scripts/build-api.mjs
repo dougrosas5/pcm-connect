@@ -19,7 +19,7 @@ export async function construirAPI(write = true) {
         output: {
           entryFileNames: 'pcm.mjs',
           banner:
-            '// Generado por scripts/build-api.mjs. Editar server/pcm.ts y src/features/modulo1; ejecutar npm run build.'
+            '// Generado por scripts/build-api.mjs. Editar server/pcm.ts, src/types/pcm.ts y src/features/planificacion/model; ejecutar npm run build.'
         }
       }
     }

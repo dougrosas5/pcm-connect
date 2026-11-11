@@ -1,5 +1,5 @@
-// Generado por scripts/build-api.mjs. Editar server/pcm.ts y src/features/modulo1; ejecutar npm run build.
-//#region src/features/modulo1/modelo.ts
+// Generado por scripts/build-api.mjs. Editar server/pcm.ts, src/types/pcm.ts y src/features/planificacion/model; ejecutar npm run build.
+//#region src/features/planificacion/model/modelo.ts
 function finParada(plan) {
 	const fecha = Date.parse(plan.eta) + Number(plan.horasParada) * 36e5;
 	return plan.eta && positivo(plan.horasParada) && Number.isFinite(fecha) && Math.abs(fecha) <= 864e13 ? new Date(fecha).toISOString() : "";
@@ -90,6 +90,15 @@ function validarFuente(tareas) {
 		}
 	}
 }
+function puedeCambiarEta(actor) {
+	return [
+		"Planificador",
+		"Administrador",
+		"Supervisor Taller"
+	].includes(actor.rol);
+}
+//#endregion
+//#region src/features/planificacion/model/comandos.ts
 function aplicarComando(actual, comando, actor, solicitud, fecha) {
 	if (actual.solicitudes[solicitud] !== void 0) return actual;
 	const siguiente = structuredClone(actual);
@@ -110,6 +119,11 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		if (anterior && anterior.planificadorId !== actor.id && actor.rol !== "Administrador") throw new Error("La planificación pertenece a otro planificador.");
 		if (anterior && (anterior.estado !== "Borrador" || anterior.version !== comando.plan.version)) throw new Error("La planificación cambió o ya fue enviada. Volvé a abrirla.");
 		const plan = structuredClone(comando.plan);
+		if (!anterior && !etaValida(plan.eta)) throw new Error("ETA: completá una fecha y hora válidas antes de crear la planificación.");
+		if (anterior && plan.eta !== anterior.eta) throw new Error("La ETA final se modifica desde Validación Taller, con comentario e historial.");
+		plan.etaInicial = anterior ? anterior.etaInicial ?? anterior.eta : plan.eta;
+		plan.origenEtaInicial = anterior ? anterior.origenEtaInicial ?? (anterior.eta ? "heredada" : "sin-dato") : "creacion";
+		plan.historialEta = structuredClone(anterior?.historialEta ?? []);
 		const tareas = /* @__PURE__ */ new Set();
 		const oms = /* @__PURE__ */ new Set();
 		for (const fila of plan.filas) {
@@ -140,6 +154,30 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		plan.referencias = Object.fromEntries(Object.values(actual.catalogos).flat().map((e) => [e.id, structuredClone(e)]));
 		siguiente.planes = [...actual.planes.filter((p) => p.id !== plan.id), plan];
 		auditar(plan.tag, anterior ?? null, plan);
+	} else if (comando.tipo === "cambiarEta") {
+		if (!puedeCambiarEta(actor)) throw new Error("Solo PCM o un Supervisor de Taller autorizado puede modificar la ETA final.");
+		const plan = siguiente.planes.find((p) => p.id === comando.planId);
+		if (!plan || plan.version !== comando.version) throw new Error("La planificación cambió. Actualizá los datos antes de modificar la ETA final.");
+		if (!etaValida(comando.eta)) throw new Error("Ingresá una ETA final válida.");
+		if (!comando.comentario.trim()) throw new Error("El cambio de ETA final requiere un comentario.");
+		if (comando.eta === plan.eta) throw new Error("La ETA final no cambió; no se registró un evento duplicado.");
+		const anterior = structuredClone(plan);
+		plan.etaInicial ??= plan.eta;
+		plan.origenEtaInicial ??= plan.eta ? "heredada" : "sin-dato";
+		plan.historialEta ??= [];
+		plan.historialEta.push({
+			fecha,
+			usuarioId: actor.id,
+			usuario: actor.nombre,
+			anterior: plan.eta,
+			nuevo: comando.eta,
+			comentario: comando.comentario.trim(),
+			revisionDisponibilidad: "pendiente"
+		});
+		plan.eta = comando.eta;
+		plan.actualizado = fecha;
+		plan.version++;
+		auditar(plan.tag, anterior, plan);
 	} else if (comando.tipo === "catalogo") {
 		if (actor.rol !== "Administrador") throw new Error("Solo Administración puede modificar catálogos.");
 		const entrada = {
@@ -196,7 +234,7 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 	return siguiente;
 }
 //#endregion
-//#region src/features/modulo1/validacion.ts
+//#region src/features/planificacion/model/validacion.ts
 function texto(valor, maximo = 5e3) {
 	return typeof valor === "string" && valor.length <= maximo;
 }
@@ -214,11 +252,18 @@ function validarComando(valor) {
 			"horasParada"
 		].every((k) => texto(p[k], 100)) || !Array.isArray(p.filas) || p.filas.length > 500) throw new Error("La planificación tiene datos inválidos o supera 500 tareas.");
 		if (p.filas.length) validarFuente(p.filas);
+		if (p.etaInicial !== void 0 && (typeof p.etaInicial !== "string" || p.etaInicial !== "" && !etaValida(p.etaInicial)) || p.origenEtaInicial !== void 0 && ![
+			"creacion",
+			"heredada",
+			"sin-dato"
+		].includes(String(p.origenEtaInicial)) || p.historialEta !== void 0 && (!Array.isArray(p.historialEta) || p.historialEta.some((c) => !objeto(c) || !texto(c.fecha) || !etaValida(c.fecha) || !texto(c.usuarioId, 80) || !texto(c.usuario) || !texto(c.anterior) || c.anterior !== "" && !etaValida(c.anterior) || !texto(c.nuevo) || !etaValida(c.nuevo) || !texto(c.comentario) || !c.comentario.trim() || c.revisionDisponibilidad !== "pendiente"))) throw new Error("Los datos o el historial de ETA son inválidos; no se modificó el guardado.");
 		if (p.filas.some((f) => !objeto(f) || ![
 			"tiempoPropuesto",
 			"trabajadores",
 			"responsableId"
 		].every((k) => texto(f[k], 100)))) throw new Error("Campos de propuesta inválidos.");
+	} else if (valor.tipo === "cambiarEta") {
+		if (!texto(valor.planId, 80) || !valor.planId || !Number.isSafeInteger(valor.version) || Number(valor.version) < 1 || !texto(valor.eta, 100) || !etaValida(valor.eta) || !texto(valor.comentario) || !valor.comentario.trim()) throw new Error("Ingresá una ETA final válida y un comentario para registrar el cambio.");
 	} else if (valor.tipo === "catalogo") {
 		const e = valor.entrada;
 		if (![
@@ -286,6 +331,7 @@ function crearHandler(configuracion, solicitar = fetch) {
 			if (!perfil?.activo || ![
 				"Planificador",
 				"Taller",
+				"Supervisor Taller",
 				"Administrador",
 				"Consulta"
 			].includes(perfil.rol)) return respuesta({ message: "La cuenta no tiene un perfil activo autorizado en PCM Connect." }, 403);

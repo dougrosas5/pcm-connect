@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { tareasDemo } from '../src/data/tareas.ts'
-import { remolcadoresDemo } from '../src/data/remolcadores.ts'
-import { buscarTareas, datosDeTarea, resumirCostos } from '../src/features/busquedaTareas.ts'
-import { clavePlanificaciones, guardarPlanificaciones, leerPlanificaciones } from '../src/features/almacenPlanificaciones.ts'
-import { actualizarPreparacion, crearPlanificacion, erroresDatosGenerales, registroVacio } from '../src/features/planificaciones.ts'
-import type { DatosGenerales } from '../src/features/planificaciones.ts'
+import { tareasDemo } from '../src/features/archivo-local/data/tareas.ts'
+import { remolcadoresDemo } from '../src/features/archivo-local/data/remolcadores.ts'
+import { buscarTareas, datosDeTarea, resumirCostos } from '../src/features/archivo-local/model/busquedaTareas.ts'
+import { clavePlanificaciones, guardarPlanificaciones, leerPlanificaciones } from '../src/features/archivo-local/services/almacenPlanificaciones.ts'
+import { actualizarPreparacion, crearPlanificacion, erroresDatosGenerales, registroVacio } from '../src/features/archivo-local/model/planificaciones.ts'
+import type { DatosGenerales } from '../src/features/archivo-local/model/planificaciones.ts'
 
 const datos: DatosGenerales = { remolcador: remolcadoresDemo[0], fechaParada: '2026-11-20', horasParada: '8.5' }
 

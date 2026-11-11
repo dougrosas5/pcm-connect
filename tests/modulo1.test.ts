@@ -1,28 +1,13 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  agregarTareas,
-  aplicarComando,
-  elegibles,
-  erroresEnvio,
-  etaDesdeInput,
-  finParada,
-  inputDesdeEta,
-  nuevoPlan,
-  registroInicial,
-  valorTotal
-} from '../src/features/modulo1/modelo.ts'
-import type { Actor, Comando, Registro } from '../src/features/modulo1/modelo.ts'
-import {
-  columnasImportacion,
-  convertirFilas,
-  convertirHoja,
-  fuenteFicticia,
-  leerCSV
-} from '../src/features/modulo1/importacion.ts'
+import { agregarTareas, elegibles, erroresEnvio, etaDesdeInput, finParada, inputDesdeEta, nuevoPlan, registroInicial, valorTotal } from '../src/features/planificacion/model/modelo.ts'
+import { aplicarComando } from '../src/features/planificacion/model/comandos.ts'
+import type { Actor, Comando, Registro } from '../src/types/pcm.ts'
+import { columnasImportacion, convertirFilas, convertirHoja, leerCSV } from '../src/features/planificacion/services/importacion.ts'
+import { fuenteFicticia } from '../src/features/planificacion/data/fuenteFicticia.ts'
 import { readSheet } from 'read-excel-file/node'
 import { fileURLToPath } from 'node:url'
-import { validarComando } from '../src/features/modulo1/validacion.ts'
+import { validarComando } from '../src/features/planificacion/model/validacion.ts'
 
 const pcm: Actor = { id: 'pcm-ficticio', nombre: 'Planificador ficticio', rol: 'Planificador' }
 const admin: Actor = { id: 'admin-ficticio', nombre: 'Administrador ficticio', rol: 'Administrador' }
@@ -94,6 +79,7 @@ test('v1.3: busca múltiples IDs, agrupa solo Valor aprobado y preserva original
 test('v1.3: borrador incompleto, TAG permanente, recarga y envío idempotente', () => {
   let r = base()
   let plan = nuevoPlan(pcm, 'plan-ficticio-000001')
+  plan.eta = fecha
   r = aplicar(r, { tipo: 'guardar', plan, enviar: false })
   plan = r.planes[0]
   assert.equal(plan.tag, 'PCM-000001')
@@ -118,6 +104,8 @@ test('v1.3: valida envío pero permite borrador incompleto y advertencia individ
   assert.equal(aplicar(r, { tipo: 'guardar', plan: p, enviar: true }).planes[0].estado, 'Enviado a Taller')
   const vacio = nuevoPlan(pcm, 'plan-ficticio-000002')
   assert.ok(erroresEnvio(vacio, r).length >= 5)
+  assert.throws(() => aplicar(r, { tipo: 'guardar', plan: vacio, enviar: false }), /ETA/u)
+  vacio.eta = fecha
   assert.throws(() => aplicar(r, { tipo: 'guardar', plan: vacio, enviar: true }), /Agregá al menos/u)
   assert.equal(aplicar(r, { tipo: 'guardar', plan: vacio, enviar: false }).planes.length, 1)
   for (const trabajadores of ['0', '1.5', '-2', '1e2'])

@@ -3,18 +3,18 @@ import assert from 'node:assert/strict'
 import { createServer } from 'vite'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { actualizarPreparacion, crearPlanificacion, registroVacio } from '../src/features/planificaciones.ts'
-import { buscarTareas } from '../src/features/busquedaTareas.ts'
-import { tareasDemo } from '../src/data/tareas.ts'
-import { actorPCM, decidirPCM, enviarATaller, evaluarOM, finalizarEvaluacion, rolesDemo } from '../src/features/validacionTaller.ts'
+import { actualizarPreparacion, crearPlanificacion, registroVacio } from '../src/features/archivo-local/model/planificaciones.ts'
+import { buscarTareas } from '../src/features/archivo-local/model/busquedaTareas.ts'
+import { tareasDemo } from '../src/features/archivo-local/data/tareas.ts'
+import { actorPCM, decidirPCM, enviarATaller, evaluarOM, finalizarEvaluacion, rolesDemo } from '../src/features/archivo-local/model/validacionTaller.ts'
 
 // Render real de los componentes con Vite/React, sin agregar un emulador de DOM.
 // Comprueba la interfaz generada; no sustituye pruebas de interacción en navegador.
 test('React renderiza navegación, vacío, permisos, resumen, decisiones e historial sin errores', async () => {
   const vite = await createServer({ server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom' })
   try {
-    const { default: ValidacionTaller } = await vite.ssrLoadModule('/src/components/ValidacionTaller.tsx')
-    const { default: App } = await vite.ssrLoadModule('/src/App.tsx')
+    const { default: ValidacionTaller } = await vite.ssrLoadModule('/src/features/archivo-local/components/ValidacionTaller.tsx')
+    const { default: App } = await vite.ssrLoadModule('/src/app/App.tsx')
     const vacio = renderToStaticMarkup(createElement(ValidacionTaller, { registro: registroVacio(), actor: actorPCM, guardar: () => true, bloqueado: false }))
     assert.match(vacio, /No hay planificaciones recibidas/u)
 

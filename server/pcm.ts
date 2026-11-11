@@ -1,6 +1,6 @@
-import { aplicarComando } from '../src/features/modulo1/modelo.ts'
-import type { Actor, Comando, Registro, Rol } from '../src/features/modulo1/modelo.ts'
-import { validarComando } from '../src/features/modulo1/validacion.ts'
+import { aplicarComando } from '../src/features/planificacion/model/comandos.ts'
+import type { Actor, Comando, Registro, Rol } from '../src/types/pcm.ts'
+import { validarComando } from '../src/features/planificacion/model/validacion.ts'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 
 type Configuracion = { url: string; clave: string }
@@ -56,7 +56,7 @@ export function crearHandler(configuracion: () => Configuracion, solicitar: type
         `pcm_perfiles?id=eq.${encodeURIComponent(usuario.id)}&select=id,nombre,rol,activo`
       )) as (Actor & { activo: boolean })[]
       const perfil = perfiles[0]
-      const roles: Rol[] = ['Planificador', 'Taller', 'Administrador', 'Consulta']
+      const roles: Rol[] = ['Planificador', 'Taller', 'Supervisor Taller', 'Administrador', 'Consulta']
       if (!perfil?.activo || !roles.includes(perfil.rol))
         return respuesta({ message: 'La cuenta no tiene un perfil activo autorizado en PCM Connect.' }, 403)
       const actor: Actor = { id: perfil.id, nombre: perfil.nombre, rol: perfil.rol }

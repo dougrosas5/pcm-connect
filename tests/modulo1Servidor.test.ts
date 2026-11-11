@@ -4,8 +4,8 @@ import { readFile } from 'node:fs/promises'
 import { PGlite } from '@electric-sql/pglite'
 import nodeHandler, { crearHandler } from '../server/pcm.ts'
 import { createServer } from 'node:http'
-import { nuevoPlan } from '../src/features/modulo1/modelo.ts'
-import type { Actor, Comando, Registro } from '../src/features/modulo1/modelo.ts'
+import { nuevoPlan } from '../src/features/planificacion/model/modelo.ts'
+import type { Actor, Comando, Registro } from '../src/types/pcm.ts'
 
 test('adaptador Node de Vercel responde por HTTP sin configuración y sin sesión', async () => {
   const urlAnterior = process.env.SUPABASE_URL
@@ -55,12 +55,16 @@ test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempot
     nombre: 'Consulta ficticia',
     rol: 'Consulta'
   }
-  const actores = [pcm, consulta]
+  const supervisor: Actor = { id: '00000000-0000-0000-0000-000000000003', nombre: 'Supervisor ficticio', rol: 'Supervisor Taller' }
+  const taller: Actor = { id: '00000000-0000-0000-0000-000000000004', nombre: 'Taller ficticio', rol: 'Taller' }
+  const actores = [pcm, consulta, supervisor, taller]
   await db.exec(
     'create schema auth; create table auth.users(id uuid primary key); create role anon; create role authenticated; create role service_role bypassrls;'
   )
   for (const a of actores) await db.query('insert into auth.users(id) values($1)', [a.id])
   await db.exec(sql)
+  const sqlSupervisor = await readFile(new URL('../supabase/migrations/202611100001_supervisor_taller.sql', import.meta.url), 'utf8')
+  await db.exec(sqlSupervisor)
   for (const a of actores)
     await db.query('insert into public.pcm_perfiles(id,nombre,rol) values($1,$2,$3)', [a.id, a.nombre, a.rol])
   const transporte = (async (input, init) => {
@@ -137,6 +141,7 @@ test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempot
           401
         )
         const p = nuevoPlan(pcm, 'plan-servidor-000001')
+        p.eta = '2026-11-10T15:00:00.000Z'
         p.planificador = 'Autor falsificado'
         p.planificadorId = 'id-falsificado'
         assert.equal((await enviar({ tipo: 'guardar', plan: p, enviar: false }, 0, consulta)).status, 422)
@@ -168,6 +173,7 @@ test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempot
       const actual = await leer()
       const p1 = nuevoPlan(pcm, 'plan-servidor-000002')
       const p2 = nuevoPlan(pcm, 'plan-servidor-000003')
+      p1.eta = p2.eta = '2026-11-10T15:00:00.000Z'
       const resultados = await Promise.all([
         enviar({ tipo: 'guardar', plan: p1, enviar: false }, actual.revision),
         enviar({ tipo: 'guardar', plan: p2, enviar: false }, actual.revision)
@@ -188,7 +194,7 @@ test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempot
       const actual = await leer()
       const comando: Comando = {
         tipo: 'guardar',
-        plan: nuevoPlan(pcm, 'plan-servidor-000004'),
+        plan: { ...nuevoPlan(pcm, 'plan-servidor-000004'), eta: '2026-11-10T15:00:00.000Z' },
         enviar: false
       }
       const id = 'solicitud-idempotente-servidor'
@@ -204,6 +210,24 @@ test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempot
       assert.equal(despues.planes.length, actual.planes.length + 1)
       assert.equal(despues.historial.length, actual.historial.length + 1)
       assert.equal((await enviar(comando, actual.revision, pcm, id)).status, 200)
+      assert.deepEqual(await leer(), despues)
+    })
+    await t.test('M2 API: autorización de Supervisor, historial y rechazo de revisión obsoleta', async () => {
+      const r = await leer()
+      const p = r.planes[0]
+      const comando: Comando = { tipo: 'cambiarEta', planId: p.id, version: p.version,
+        eta: '2026-11-11T15:00:00.000Z', comentario: 'Cambio ficticio desde API' }
+      for (const actor of [taller, consulta])
+        assert.equal((await enviar(comando, r.revision, actor)).status, 422)
+      assert.deepEqual(await leer(), r)
+      assert.equal((await enviar(comando, r.revision, supervisor, 'recibo-supervisor-eta')).status, 200)
+      const despues = await leer()
+      const nuevo = despues.planes.find((plan) => plan.id === p.id)!
+      assert.equal(nuevo.etaInicial, p.eta)
+      assert.equal(nuevo.historialEta?.[0].usuarioId, supervisor.id)
+      assert.equal(nuevo.historialEta?.[0].comentario, comando.comentario)
+      assert.equal((await enviar(comando, r.revision, pcm)).status, 409)
+      assert.equal((await enviar(comando, r.revision, supervisor, 'recibo-supervisor-eta')).status, 200)
       assert.deepEqual(await leer(), despues)
     })
     await t.test(

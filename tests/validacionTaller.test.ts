@@ -1,12 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { tareasDemo } from '../src/data/tareas.ts'
-import { buscarTareas, resumirCostos } from '../src/features/busquedaTareas.ts'
-import { actualizarPreparacion, crearPlanificacion, registroVacio } from '../src/features/planificaciones.ts'
-import { clavePlanificaciones, guardarPlanificaciones, leerPlanificaciones } from '../src/features/almacenPlanificaciones.ts'
-import { actorPCM, cancelarOMAceptada, corregirOM, datosOM, decidirPCM, enviarATaller, evaluarOM, finalizarEvaluacion, ordenesAsignables, permisos, puedeCorregir, revisionDe, rolesDemo, tallerDe } from '../src/features/validacionTaller.ts'
-import type { Actor } from '../src/features/validacionTaller.ts'
-import type { RegistroPlanificaciones } from '../src/features/planificaciones.ts'
+import { tareasDemo } from '../src/features/archivo-local/data/tareas.ts'
+import { buscarTareas, resumirCostos } from '../src/features/archivo-local/model/busquedaTareas.ts'
+import { actualizarPreparacion, crearPlanificacion, registroVacio } from '../src/features/archivo-local/model/planificaciones.ts'
+import { clavePlanificaciones, guardarPlanificaciones, leerPlanificaciones } from '../src/features/archivo-local/services/almacenPlanificaciones.ts'
+import { actorPCM, cancelarOMAceptada, corregirOM, datosOM, decidirPCM, enviarATaller, evaluarOM, finalizarEvaluacion, ordenesAsignables, permisos, puedeCorregir, revisionDe, rolesDemo, tallerDe } from '../src/features/archivo-local/model/validacionTaller.ts'
+import type { Actor } from '../src/features/archivo-local/model/validacionTaller.ts'
+import type { RegistroPlanificaciones } from '../src/features/archivo-local/model/planificaciones.ts'
 
 const taller: Actor = { rol: 'Taller', usuario: 'Evaluador ficticio' }
 const datos = { remolcador: 'Demo Norte', fechaParada: '2026-11-01', horasParada: '8' }

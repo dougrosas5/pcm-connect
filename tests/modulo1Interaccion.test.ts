@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer } from 'vite'
 import { Window } from 'happy-dom'
-import type { Plan, Registro } from '../src/features/modulo1/modelo.ts'
+import type { Plan, Registro } from '../src/types/pcm.ts'
 
 test('v1.3 React: catálogo, importación, edición, recuperación, reapertura, envío y recepción', async () => {
   const dom = new Window({ url: 'http://localhost:5173' })
@@ -13,6 +13,7 @@ test('v1.3 React: catálogo, importación, edición, recuperación, reapertura, 
     navigator: dom.navigator,
     HTMLElement: dom.HTMLElement,
     Event: dom.Event,
+    requestAnimationFrame: (fn: () => void) => dom.requestAnimationFrame(fn),
     IS_REACT_ACT_ENVIRONMENT: true
   })) {
     originales.set(k, Object.getOwnPropertyDescriptor(globalThis, k))
@@ -85,9 +86,12 @@ test('v1.3 React: catálogo, importación, edición, recuperación, reapertura, 
     })
   }
   try {
-    const { default: App } = await vite.ssrLoadModule('/src/App.tsx')
+    const { default: App } = await vite.ssrLoadModule('/src/app/App.tsx')
     await esperar(() => root.render(createElement(App)))
     assert.match(contenedor.textContent, /Sin importaciones/u)
+    await click('Guardar borrador')
+    assert.match(contenedor.querySelector('[role=alert]')!.textContent, /ETA/u)
+    await cambiar('ETA inicial · hora de Montevideo', '2026-11-03T23:30')
     await click('Enviar a Taller')
     assert.match(contenedor.querySelector('[role=alert]')!.textContent, /Agregá al menos/u)
     await click('Guardar borrador')
@@ -121,7 +125,7 @@ test('v1.3 React: catálogo, importación, edición, recuperación, reapertura, 
     assert.match(contenedor.textContent, /NO-EXISTE/u)
     await cambiar('Remolcador', estado().catalogos.remolcadores[0].id)
     await cambiar('Ubicación', estado().catalogos.ubicaciones[0].id)
-    await cambiar('ETA · hora de Montevideo', '2026-11-03T23:30')
+    assert.equal((campo('ETA final · hora de Montevideo') as HTMLInputElement).disabled, true)
     await cambiar('Tiempo de parada (h)', '2')
     await cambiar('Tiempo propuesto de DEMO-1001', '4')
     await cambiar('Trabajadores propuestos de DEMO-1001', '2')
@@ -164,15 +168,58 @@ test('v1.3 React: catálogo, importación, edición, recuperación, reapertura, 
     assert.equal(persistido.filas.length, 2)
     await cambiar('Rol simulado (demo)', 'Taller')
     await click('Validación Taller')
-    assert.match(contenedor.textContent, /Ejecución externa/u)
-    assert.equal(contenedor.querySelectorAll('.m1-taller form').length, 1)
-    await click('Registrar evaluación de DEMO-1001')
-    await click('Finalizar evaluación')
+    assert.equal(contenedor.querySelectorAll('.m2-bandeja tbody tr').length, 1)
+    await cambiar('Filtrar por TAG', 'INEXISTENTE')
+    assert.match(contenedor.textContent, /No hay coincidencias/u)
+    await click('Limpiar filtros')
+    await cambiar('ETA final desde', '2026-11-12')
+    await cambiar('ETA final hasta', '2026-11-01')
+    assert.match(contenedor.textContent, /no puede ser posterior/u)
+    await click('Limpiar filtros')
+    await click('Historial')
+    assert.match(contenedor.textContent, /No hay planificaciones finalizadas/u)
+    await click('Activas')
+    await click('Consultar')
+    assert.match(contenedor.textContent, /ETA final en consulta/u)
+    assert.equal(contenedor.querySelectorAll('.m2-editor').length, 0)
+    await cambiar('Rol simulado (demo)', 'Supervisor Taller')
+    await enviarFormulario(contenedor.querySelector('.m2-editor') as unknown as Element)
+    assert.match(contenedor.textContent, /Ingresá una ETA final diferente/u)
+    await cambiar('Nueva ETA final · Montevideo', '2026-11-04T23:30')
+    await cambiar('Comentario del cambio (obligatorio)', 'Cambio ficticio de arribo')
+    await esperar(() => {
+      const formulario = contenedor.querySelector('.m2-editor')!
+      for (let i = 0; i < 2; i++) formulario.dispatchEvent(new dom.Event('submit', { bubbles: true, cancelable: true }))
+    })
     persistido = estado().planes[0]
-    assert.equal(persistido.estado, 'Evaluado')
-    assert.equal(Object.keys(persistido.evaluaciones).length, 1)
-    assert.equal(persistido.evaluaciones['DEMO-1001'].resultado, 'Aceptada')
-    const { leerLocal } = await vite.ssrLoadModule('/src/features/modulo1/persistencia.ts')
+    assert.equal(persistido.estado, 'Enviado a Taller')
+    assert.equal(Object.keys(persistido.evaluaciones).length, 0)
+    assert.equal(persistido.etaInicial, '2026-11-04T02:30:00.000Z')
+    assert.equal(persistido.eta, '2026-11-05T02:30:00.000Z')
+    assert.equal(persistido.historialEta?.length, 1)
+    assert.equal(persistido.historialEta?.[0].comentario, 'Cambio ficticio de arribo')
+    await click('Planificación')
+    assert.equal((campo('ETA final · hora de Montevideo') as HTMLInputElement).value, '2026-11-04T23:30')
+    assert.match((campo('Fin de parada · Montevideo') as HTMLInputElement).value, /5\/11\/26/u)
+    await click('Validación Taller')
+    await click('Consultar')
+    assert.match(contenedor.textContent, /Cambio ficticio de arribo/u)
+    await click('Volver a la bandeja')
+    await cambiar('Filtrar por TAG', 'pcm-000001')
+    assert.equal(contenedor.querySelectorAll('.m2-bandeja tbody tr').length, 1)
+    const { leerLocal } = await vite.ssrLoadModule('/src/services/pcm/persistencia.ts')
+    assert.deepEqual(leerLocal(dom.localStorage), estado())
+    // Leer un registro antiguo no lo reescribe ni toca las otras claves.
+    const antiguo = structuredClone(estado())
+    delete antiguo.planes[0].etaInicial
+    delete antiguo.planes[0].origenEtaInicial
+    delete antiguo.planes[0].historialEta
+    const textoAntiguo = JSON.stringify(antiguo)
+    dom.localStorage.setItem('pcm-connect.modulo1.v13', textoAntiguo)
+    dom.localStorage.setItem('pcm-connect.planificaciones.v1', 'archivo ficticio intacto')
+    assert.deepEqual(leerLocal(dom.localStorage), antiguo)
+    assert.equal(dom.localStorage.getItem('pcm-connect.modulo1.v13'), textoAntiguo)
+    assert.equal(dom.localStorage.getItem('pcm-connect.planificaciones.v1'), 'archivo ficticio intacto')
     const corrupto = { ...estado(), contador: 0 }
     const texto = JSON.stringify(corrupto)
     dom.localStorage.setItem('pcm-connect.modulo1.v13', texto)
