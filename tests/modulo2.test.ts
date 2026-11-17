@@ -58,7 +58,7 @@ test('M2: cambio conserva identificadores, propuesta, costos, decisiones y estad
   assert.equal(nuevo.estado, 'Evaluado')
   assert.deepEqual(nuevo.evaluaciones, p.evaluaciones)
   assert.deepEqual(nuevo.filas, p.filas)
-  assert.deepEqual(nuevo.historialEta, [{ fecha, usuarioId: supervisor.id, usuario: supervisor.nombre,
+  assert.deepEqual(nuevo.historialEta, [{ fecha, usuarioId: supervisor.id, usuario: supervisor.nombre, rol: supervisor.rol,
     anterior: original, nuevo: nueva, comentario: 'Arribo ficticio reprogramado', revisionDisponibilidad: 'pendiente' }])
   assert.equal(despues.historial.at(-1)?.accion, 'cambiarEta')
   assert.deepEqual(aplicar(despues, c, supervisor, 'recibo-eta-ficticio'), despues)

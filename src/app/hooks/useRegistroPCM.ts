@@ -118,7 +118,7 @@ export function useRegistroPCM() {
       const carga = await ejecutar(comando, registro.revision, actor, solicitudPendiente.current.id)
       setRegistro(carga.registro)
       setActor(carga.actor)
-      if (comando.tipo === 'cambiarEta' && !sucio && comando.planId === plan.id) {
+      if ('planId' in comando && !sucio && comando.planId === plan.id) {
         const actualizado = carga.registro.planes.find((p) => p.id === plan.id)
         if (actualizado) setPlan(actualizado)
       }

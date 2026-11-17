@@ -6,6 +6,7 @@ import nodeHandler, { crearHandler } from '../server/pcm.ts'
 import { createServer } from 'node:http'
 import { nuevoPlan } from '../src/features/planificacion/model/modelo.ts'
 import type { Actor, Comando, Registro } from '../src/types/pcm.ts'
+import { escenario } from './helpers/revisionFixtures.ts'
 
 test('adaptador Node de Vercel responde por HTTP sin configuración y sin sesión', async () => {
   const urlAnterior = process.env.SUPABASE_URL
@@ -229,6 +230,30 @@ test('v1.3 servidor y migración: permisos, persistencia, concurrencia e idempot
       assert.equal((await enviar(comando, r.revision, pcm)).status, 409)
       assert.equal((await enviar(comando, r.revision, supervisor, 'recibo-supervisor-eta')).status, 200)
       assert.deepEqual(await leer(), despues)
+    })
+    await t.test('M3 API: resoluciones autenticadas, confirmación idempotente y versiones obsoletas', async () => {
+      // Fixture aislada en la base WASM de esta prueba, sin conexión a Supabase real.
+      const fixture = escenario(true, 2)
+      await db.query('update public.pcm_modulo1 set registro=$1::jsonb where id=1', [JSON.stringify(fixture)])
+      const p = fixture.planes[0]
+      const resolver: Comando = { tipo: 'guardarRevision', planId: p.id, version: p.version, decisiones: [{ tareaId: 'QA-2', tipo: 'Tercerizada' }] }
+      for (const actor of [consulta, taller, supervisor]) assert.equal((await enviar(resolver, fixture.revision, actor)).status, 422)
+      assert.deepEqual(await leer(), fixture)
+      assert.equal((await enviar(resolver, fixture.revision, pcm)).status, 200)
+      const resuelta = await leer()
+      assert.equal(resuelta.planes[0].revisionPCM?.tareas['QA-2'].resolucion?.usuarioId, pcm.id)
+      assert.equal((await enviar(resolver, fixture.revision, pcm)).status, 409)
+      const confirmar: Comando = { tipo: 'confirmarPCM', planId: p.id, version: resuelta.planes[0].version, reconocerConflictos: false }
+      const respuestas = await Promise.all([
+        enviar(confirmar, resuelta.revision, pcm, 'm3-recibo-confirmacion-api'),
+        enviar(confirmar, resuelta.revision, pcm, 'm3-recibo-confirmacion-api')
+      ])
+      assert.deepEqual(respuestas.map((r) => r.status), [200, 200])
+      const confirmada = await leer()
+      assert.equal(confirmada.planes[0].estado, 'Confirmada')
+      assert.equal(confirmada.planes[0].revisionPCM?.confirmacion?.usuarioId, pcm.id)
+      assert.equal(confirmada.historial.filter((e) => e.accion === 'confirmarPCM').length, 1)
+      assert.deepEqual(confirmada.planes[0].evaluaciones, fixture.planes[0].evaluaciones)
     })
     await t.test(
       'anon y authenticated no leen ni escriben tablas o invocan la transacción directamente',

@@ -1,4 +1,6 @@
 import EditorEta from './EditorEta'
+import EvaluacionTareas from './EvaluacionTareas'
+import { conflictosPendientes } from '../../revision-pcm/model/revision'
 import { useRef, useState } from 'react'
 import { finParada, mostrarFecha } from '../../planificacion/model/modelo'
 import type { Actor, Comando, Registro } from '../../../types/pcm'
@@ -70,7 +72,7 @@ export default function ValidacionTaller(props: Props) {
           <label className="m1-campo">Filtrar por estado
             <select value={filtros.estado} onChange={(e) => filtrar('estado', e.target.value)}>
               <option value="">Todos</option>
-              {['Borrador', 'Enviado a Taller', 'En evaluación', 'Evaluado'].map((s) => <option key={s}>{s}</option>)}
+              {['Borrador', 'Enviado a Taller', 'En evaluación', 'Evaluado', 'En reevaluación', 'Confirmada', 'Cancelada'].map((s) => <option key={s}>{s}</option>)}
             </select>
           </label>
           <label className="m1-campo">ETA final desde
@@ -85,10 +87,10 @@ export default function ValidacionTaller(props: Props) {
         {filtros.desde && filtros.hasta && filtros.desde > filtros.hasta && <p role="alert" className="m1-error">La fecha desde no puede ser posterior a la fecha hasta.</p>}
       </section>
       <p role="status">{filtradas.length} planificaciones</p>
-      {historial && <p className="m1-nota">Historial reservado para planificaciones finalizadas. «Evaluado» no significa trabajo finalizado; todavía no existe una transición de cierre.</p>}
+      {historial && <p className="m1-nota">Revisiones PCM confirmadas o canceladas. «Confirmada» no significa trabajo ejecutado; el cierre de ejecución pertenece a un módulo posterior.</p>}
       {!filtradas.length ? (
         <p className="estado-vacio">{historial
-          ? 'No hay planificaciones finalizadas.'
+          ? 'No hay planificaciones finalizadas en revisión PCM.'
           : registro.planes.length
             ? 'No hay coincidencias. Revisá o limpiá los filtros.'
             : 'No hay planificaciones guardadas. Creá una desde Planificación.'}
@@ -161,7 +163,8 @@ export default function ValidacionTaller(props: Props) {
           cambiosPCM={props.cambiosPCM}
           ejecutar={ejecutar}
         />
-        {Boolean(plan.historialEta?.length) && <p className="m1-nota">Disponibilidad pendiente de revisión por cambio de ETA. No se confirmó capacidad ni se modificaron decisiones previas. La detección de conflictos pertenece a una próxima iteración.</p>}
+        {Boolean(plan.historialEta?.length) && <p className="m1-nota">Disponibilidad pendiente de revisión por cambio de ETA. Las decisiones previas se conservan. {conflictosPendientes(plan).length} advertencias de reprogramación.</p>}
+        {!!conflictosPendientes(plan).length && <ul className="m1-nota">{conflictosPendientes(plan).map((c) => <li key={c.id}>{c.detalle} · {c.estado}</li>)}</ul>}
       </div>
       <section className="m1-panel" aria-label="Historial de ETA">
         <h3>Historial de cambios de ETA</h3>
@@ -175,16 +178,9 @@ export default function ValidacionTaller(props: Props) {
           ))}</ol>
         )}
       </section>
-      <p className="m1-nota">Consulta de la propuesta original. La evaluación por tarea u OM y la resolución de rechazos están pendientes de decisión; esta iteración no registra aceptaciones ni rechazos.</p>
+      <p className="m1-nota">Propuesta PCM vigente en consulta. Las correcciones y decisiones anteriores se conservan en el historial.</p>
       <TablaPropuesta plan={plan} registro={registro} editable={false} cambiar={() => {}} />
-      {Object.keys(plan.evaluaciones).length > 0 && (
-        <section className="m1-panel">
-          <h3>Evaluaciones anteriores · v1.3</h3>
-          <ul>{Object.entries(plan.evaluaciones).map(([id, e]) => (
-            <li key={id}>{id}: {e.resultado} · {e.motivo || 'Sin observaciones'} · {e.usuario} · {mostrarFecha(e.fecha)}</li>
-          ))}</ul>
-        </section>
-      )}
+      <EvaluacionTareas plan={plan} actor={actor} ocupado={ocupado} ejecutar={ejecutar} />
     </section>}
   </div>
 }

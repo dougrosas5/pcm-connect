@@ -11,6 +11,7 @@ src/
     hooks/useRegistroPCM.ts         Estado compartido, recuperación y ejecución
   components/
     SelectorCatalogo.tsx            Selector reutilizado en cabecera y propuesta
+    layout/                        AppShell, Sidebar y PageHeader de presentación
   features/
     planificacion/
       components/                  CabeceraPlan, TablaPropuesta, Importador
@@ -28,10 +29,14 @@ src/
       model/                       Reglas y tipos históricos
       services/                    Persistencia histórica
       data/                        Tareas y remolcadores ficticios históricos
+    revision-pcm/
+      components/                  Bandeja, modal y tabla de resoluciones
+      model/                       Reglas de revisión y validación aditiva
+      styles/                      Modal y tabla Graphite
   services/pcm/persistencia.ts      Adaptadores local/HTTP y sesión
   types/pcm.ts                     Contrato compartido de los planes vigentes
   utils/descargas.ts                Descarga de texto desde el navegador
-  styles/                          global.css, app.css y operaciones.css
+  styles/                          tokens.css, global.css, app.css y operaciones.css
 server/pcm.ts                      API autenticada y adaptador Node
 api/pcm.mjs                        Función autocontenida generada para Vercel
 scripts/build-api.mjs              Empaquetado de la API
@@ -44,7 +49,7 @@ No hay carpetas para funcionalidades aún no implementadas. Las pruebas conserva
 
 ## Navegación y estado React
 
-`App` selecciona la pestaña mediante estado React; no utiliza un router ni modifica la URL. `EspacioPCM` permanece montado al navegar y recibe la vista `plan`, `taller` o `catalogos`. Planificación y Tareas muestran la misma preparación, como en el funcionamiento existente. Personal continúa siendo un aviso de módulo pendiente.
+`App` selecciona la pestaña mediante estado React; no utiliza un router ni modifica la URL. `AppShell`, `Sidebar` y `PageHeader` presentan el contenedor, los mismos destinos y el título, sin almacenar datos de negocio. `EspacioPCM` permanece montado al navegar y recibe la vista `plan`, `taller`, `revision` o `catalogos`. Planificación y Tareas muestran la misma preparación, como en el funcionamiento existente. Personal continúa siendo un aviso de módulo pendiente.
 
 `useRegistroPCM` concentra el estado y los efectos que ya compartían las vistas: carga, sesión, recuperación local, guardado, actualización, bloqueo de solicitudes simultáneas y mensajes de error. Es un hook de aplicación, no una segunda base de datos. Los campos transitorios de los formularios permanecen en los componentes. Separar este hook de JSX permite revisar la persistencia sin recorrer la presentación.
 
@@ -59,9 +64,16 @@ No hay carpetas para funcionalidades aún no implementadas. Las pruebas conserva
 - `services/pcm/persistencia.ts` elige el almacenamiento local o la API. El servidor importa el dominio puro, nunca este módulo con `import.meta.env` y APIs de navegador.
 - La bandeja de Taller utiliza los planes y tipos de Planificación; no mantiene otra colección.
 - Archivo local conserva su contrato independiente. No se convierten sus planes ni se unifican sus reglas históricas con el contrato vigente.
-- `legacy/RecepcionTallerV13.tsx` conserva la recepción anterior por tarea. No está conectada a la navegación y no debe reactivarse sin resolver los requisitos pendientes.
+- `legacy/RecepcionTallerV13.tsx` conserva la recepción anterior por tarea, sin conectarla a la navegación. `EvaluacionTareas.tsx` agrega los formularios de evaluación vigente dentro de la pantalla M2 actual.
+- `revision-pcm/model/revision.ts` concentra resoluciones, confirmación, cancelación, filtros, advertencias y selectores de tareas activas/asignables. `comandos.ts` lo utiliza tanto en demo como en API; no hay otra colección de planes. El contrato está en [Revisión PCM](REVISION_PCM.md).
 
 Se usan imports relativos explícitos, compatibles con Vite, TypeScript y las pruebas Node. No se requieren aliases, un contenedor de servicios ni reexportaciones globales.
+
+## Evolución especificada del sistema de ETA
+
+El [contrato definitivo de ETA](ETA.md), aprobado el 17/11/2026, define Inicial inmutable, Final operativa y Predictiva manual independiente. Guardar una predicción y confirmarla como Final son operaciones distintas, con trazabilidad diferenciada e idempotencia. Su implementación requiere autorización posterior: esta actualización no cambia tipos, comandos, servicios, UI, claves ni datos persistidos.
+
+Al desarrollarlo, extender el contrato compartido de tipos y validaciones de forma compatible; reutilizar las operaciones existentes de ETA, auditoría y conflictos desde ambos adaptadores, y adaptar el editor compartido con tokens Graphite Maritime. Planificación, Taller, Revisión PCM y los futuros módulos de disponibilidad, asignaciones y calendario deben consumir la misma Final operativa. No duplicar lógica entre módulos ni simular integraciones con entidades todavía inexistentes.
 
 ## Persistencia
 
@@ -78,7 +90,7 @@ La ubicación de los archivos fuente no cambia ninguna clave ni el formato del J
 
 ## Estilos y recursos
 
-`main.tsx` carga `styles/global.css`; `App` carga `styles/app.css`; `EspacioPCM` carga `styles/operaciones.css`; Taller importa su hoja específica. Conservar ese orden y las clases existentes para evitar cambios de cascada. Los estilos Graphite son CSS propio, sin librerías visuales.
+`main.tsx` carga `styles/global.css`, que importa primero los tokens Graphite Maritime de `styles/tokens.css`; `App` carga `styles/app.css`; `EspacioPCM` carga `styles/operaciones.css`; Taller y Revisión importan sus hojas específicas. Conservar ese orden y las clases existentes para evitar cambios de cascada. Los alias históricos de color apuntan a los tokens centrales. La guía de uso y los estados semánticos están en [Diseño Graphite Maritime](DISEÑO_GRAPHITE.md). Se mantiene CSS propio, sin librerías visuales.
 
 El favicon utilizado permanece en `public/favicon.svg`. Los ejemplos de tareas están junto a su funcionalidad, no mezclados con los componentes ni con los datos del otro contrato.
 

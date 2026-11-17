@@ -1,0 +1,74 @@
+/* Graphite Maritime. Las hojas de componentes consumen estos tokens,
+   incluidos los alias históricos, sin repetir valores de color. */
+:root {
+  color-scheme: light;
+  --color-grafito: #262a30;
+  --color-azul-acero: #385875;
+  --color-fondo: #f1f1ee;
+  --color-superficie: #ffffff;
+  --color-terracota: #b65b47;
+  --color-texto-secundario: #626872;
+  --color-superficie-suave: #f6f7f8;
+  --color-superficie-hover: #edf1f4;
+  --color-borde: #d2d6da;
+  --color-borde-control: #858e98;
+  --color-accion-hover: #2c465e;
+  --color-sidebar-texto: #c7cdd5;
+  --color-sidebar-hover: #303b46;
+  --color-logo-acento: #e9a08b;
+  --color-backdrop: rgb(38 42 48 / 55%);
+
+  /* Texto, fondo y borde por estado: usar siempre una etiqueta visible.
+     Son tonos de presentación; no crean ni cambian estados de negocio. */
+  --estado-aceptado-texto: #246046;
+  --estado-aceptado-fondo: #edf6f0;
+  --estado-aceptado-borde: #b4d2be;
+  --estado-rechazado-texto: #943e37;
+  --estado-rechazado-fondo: #fbefed;
+  --estado-rechazado-borde: #dfbab5;
+  --estado-pendiente-texto: #73551e;
+  --estado-pendiente-fondo: #fbf5e7;
+  --estado-pendiente-borde: #decea8;
+  --estado-ejecucion-texto: var(--color-azul-acero);
+  --estado-ejecucion-fondo: #edf3f8;
+  --estado-ejecucion-borde: #bdccdb;
+  --estado-finalizado-texto: #3d5960;
+  --estado-finalizado-fondo: #edf3f3;
+  --estado-finalizado-borde: #bdced0;
+  --estado-advertencia-texto: #80501c;
+  --estado-advertencia-fondo: #fff4e7;
+  --estado-advertencia-borde: #dfc49f;
+  --estado-solapamiento-texto: #754b78;
+  --estado-solapamiento-fondo: #f7eff8;
+  --estado-solapamiento-borde: #d4bed7;
+  --estado-bloqueado-texto: #505762;
+  --estado-bloqueado-fondo: #eef0f2;
+  --estado-bloqueado-borde: #c4c9d0;
+
+  --fuente-ui: Arial, Helvetica, sans-serif;
+  --texto-xs: 0.75rem;
+  --texto-sm: 0.8125rem;
+  --texto-base: 0.875rem;
+  --texto-seccion: 1.125rem;
+  --texto-pagina: 1.625rem;
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --radio-control: 4px;
+  --radio-panel: 6px;
+  --alto-control: 36px;
+  --ancho-sidebar: 232px;
+  --foco: 2px solid var(--color-azul-acero);
+
+  /* Compatibilidad: las clases de los módulos mantienen sus nombres. */
+  --grafito: var(--color-grafito);
+  --fondo: var(--color-fondo);
+  --acento: var(--color-terracota);
+  --texto-secundario: var(--color-texto-secundario);
+  --texto-secundario-legible: var(--color-texto-secundario);
+  --superficie: var(--color-superficie);
+  --borde: var(--color-borde);
+}

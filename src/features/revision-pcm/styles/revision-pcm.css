@@ -1,0 +1,34 @@
+.m3 { margin-block: 20px; }
+.m3 h2 { font-size: 20px; }
+.m3-bandeja { min-width: 1320px; }
+.m3 button[aria-pressed='true'] { background: var(--color-azul-acero); color: var(--superficie); border-color: var(--color-azul-acero); }
+.m3-modal { width: min(1520px, calc(100vw - 48px)); max-width: none; max-height: calc(100dvh - 40px); padding: 0; border: 1px solid var(--borde); border-radius: var(--radio-panel); background: var(--superficie); color: var(--grafito); }
+.m3-modal[open] { display: flex; flex-direction: column; }
+.m3-modal::backdrop { background: var(--color-backdrop); }
+.m3-modal-cabecera, .m3-modal-pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; flex-shrink: 0; }
+.m3-modal-cabecera { border-bottom: 1px solid var(--borde); background: var(--color-superficie-suave); }
+.m3-modal-cabecera h2 { margin: 0 0 8px; }
+.m3-modal-pie { border-top: 1px solid var(--borde); }
+.m3-modal-contenido { padding: 0 20px 20px; overflow-y: auto; min-height: 0; }
+.m3-tabla { min-width: 1800px; }
+.m3-tabla td { min-width: 100px; max-width: 260px; vertical-align: top; overflow-wrap: anywhere; }
+.m3-tabla td:last-child { min-width: 270px; }
+.m3-tabla .m1-campo { margin-bottom: 10px; }
+.m3-campos { border: 1px solid var(--borde); padding: 12px; margin: 12px 0; min-width: 0; display: grid; gap: 10px; }
+.m3-campos legend { padding-inline: 4px; font-size: 13px; font-weight: 600; }
+.m3-advertencia { margin-block: var(--espacio-4); padding: var(--espacio-4); border: 1px solid var(--estado-advertencia-borde); border-radius: var(--radio-control); background: var(--estado-advertencia-fondo); color: var(--estado-advertencia-texto); }
+.m3-advertencia h3 { margin-top: 0; }
+.m3-check { display: flex; align-items: flex-start; gap: 10px; margin-block: 16px; font-size: 14px; }
+.m3-check input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: var(--grafito); }
+.m3-modal pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.m3-modal details { margin-block: 12px; }
+.m2-evaluacion { border-top: 1px solid var(--borde); padding-block: 12px; }
+.m2-evaluacion .m3-campos { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+@media (max-width: 700px) {
+  .m3-modal { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
+  .m3-modal-cabecera, .m3-modal-pie { padding: 12px; }
+  .m3-modal-contenido { padding: 0 12px 12px; }
+  .m3-modal-pie .m1-acciones { width: 100%; }
+  .m3-modal button, .m3-modal select, .m3-modal input:not([type='checkbox']) { min-height: 44px; }
+  .m3-modal h2 { font-size: 18px; }
+}

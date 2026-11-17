@@ -8,9 +8,10 @@ type Props = {
   ocupado: boolean
   cambiosPCM: boolean
   ejecutar: (comando: Comando) => Promise<boolean>
+  onDirtyChange?: (dirty: boolean) => void
 }
 
-export default function EditorEta({ plan, actor, ocupado, cambiosPCM, ejecutar }: Props) {
+export default function EditorEta({ plan, actor, ocupado, cambiosPCM, ejecutar, onDirtyChange }: Props) {
   const [eta, setEta] = useState(inputDesdeEta(plan.eta))
   const [comentario, setComentario] = useState('')
   const [error, setError] = useState('')
@@ -25,11 +26,12 @@ export default function EditorEta({ plan, actor, ocupado, cambiosPCM, ejecutar }
     setError('')
     enviando.current = true
     try {
-      await ejecutar({ tipo: 'cambiarEta', planId: plan.id, version: plan.version, eta: nueva, comentario })
+      if (await ejecutar({ tipo: 'cambiarEta', planId: plan.id, version: plan.version, eta: nueva, comentario })) onDirtyChange?.(false)
     } finally {
       enviando.current = false
     }
   }
+  if (plan.estado === 'Confirmada' || plan.estado === 'Cancelada') return <p className="m1-nota">Planificación cerrada para revisión PCM. ETA final en consulta.</p>
   if (!puedeCambiarEta(actor)) {
     return <p className="m1-nota">ETA final en consulta. Solo PCM o Supervisor Taller puede modificarla.</p>
   }
@@ -41,10 +43,10 @@ export default function EditorEta({ plan, actor, ocupado, cambiosPCM, ejecutar }
     {cambiosPCM && <p className="m1-nota">Guardá los cambios pendientes de Planificación antes de modificar la ETA final.</p>}
     <div className="m1-cabecera">
       <label className="m1-campo">Nueva ETA final · Montevideo
-        <input type="datetime-local" required value={eta} disabled={ocupado || cambiosPCM} onChange={(e) => setEta(e.target.value)} />
+        <input type="datetime-local" required value={eta} disabled={ocupado || cambiosPCM} onChange={(e) => { setEta(e.target.value); onDirtyChange?.(e.target.value !== inputDesdeEta(plan.eta) || Boolean(comentario)) }} />
       </label>
       <label className="m1-campo">Comentario del cambio (obligatorio)
-        <textarea required maxLength={5000} value={comentario} disabled={ocupado || cambiosPCM} onChange={(e) => setComentario(e.target.value)} />
+        <textarea required maxLength={5000} value={comentario} disabled={ocupado || cambiosPCM} onChange={(e) => { setComentario(e.target.value); onDirtyChange?.(eta !== inputDesdeEta(plan.eta) || Boolean(e.target.value)) }} />
       </label>
     </div>
     {error && <p role="alert" className="m1-error">{error}</p>}

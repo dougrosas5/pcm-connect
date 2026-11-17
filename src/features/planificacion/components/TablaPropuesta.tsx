@@ -1,6 +1,7 @@
 import SelectorCatalogo from '../../../components/SelectorCatalogo'
 import { elegibles, mismaFuente, moneda, positivo, valorTotal } from '../model/modelo'
 import type { FilaPropuesta, Plan, Registro } from '../../../types/pcm'
+import { resolucionTarea, responsableOperativo } from '../../revision-pcm/model/revision'
 
 export default function TablaPropuesta({
   plan,
@@ -124,12 +125,13 @@ export default function TablaPropuesta({
                       cambiar={(v) => editar(f.id, { responsableId: v })}
                     />
                   ) : (
-                    (responsable?.nombre ?? 'Sin definir')
+                    (resolucionTarea(plan, f.id)?.tipo === 'Tercerizada' ? responsableOperativo(plan, f) : responsable?.nombre ?? 'Sin definir')
                   )}
                   {responsable?.externo && <small className="m1-original">Ejecución externa</small>}
                 </td>
                 <td>
                   <span className="estado">{f.estado || 'Sin definir'}</span>
+                  {resolucionTarea(plan, f.id) && <small className="m1-original">PCM: {resolucionTarea(plan, f.id)!.tipo}{resolucionTarea(plan, f.id)!.tipo === 'Eliminada' ? ' · solo historial' : ''}</small>}
                 </td>
                 <td>
                   <div className="m1-acciones-fila">

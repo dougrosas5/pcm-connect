@@ -1,5 +1,6 @@
 import { etaValida, validarFuente } from './modelo.ts'
 import type { Comando } from '../../../types/pcm.ts'
+import { validarRevisionPersistida } from '../../revision-pcm/model/validacion.ts'
 
 function texto(valor: unknown, maximo = 5000): valor is string {
   return typeof valor === 'string' && valor.length <= maximo
@@ -48,6 +49,7 @@ export function validarComando(valor: unknown): asserts valor is Comando {
       )
     )
       throw new Error('Campos de propuesta inválidos.')
+    validarRevisionPersistida(p)
   } else if (valor.tipo === 'cambiarEta') {
     if (
       !texto(valor.planId, 80) || !valor.planId ||
@@ -81,7 +83,23 @@ export function validarComando(valor: unknown): asserts valor is Comando {
       !texto(valor.motivo)
     )
       throw new Error('Evaluación inválida.')
+    if ((valor.version !== undefined && (!Number.isSafeInteger(valor.version) || Number(valor.version) < 1)) ||
+      (valor.tiempoAceptado !== undefined && !texto(valor.tiempoAceptado, 100)) ||
+      (valor.trabajadoresAceptados !== undefined && !texto(valor.trabajadoresAceptados, 100))) throw new Error('Valores de evaluación inválidos.')
   } else if (valor.tipo === 'finalizar') {
-    if (!texto(valor.planId, 80)) throw new Error('Planificación inválida.')
+    if (!texto(valor.planId, 80) || (valor.version !== undefined && (!Number.isSafeInteger(valor.version) || Number(valor.version) < 1))) throw new Error('Planificación inválida.')
+  } else if (['guardarRevision', 'confirmarPCM', 'cancelarPCM'].includes(String(valor.tipo))) {
+    if (!texto(valor.planId, 80) || !valor.planId || !Number.isSafeInteger(valor.version) || Number(valor.version) < 1) throw new Error('Planificación o versión de revisión inválida.')
+    if (valor.tipo === 'guardarRevision') {
+      if (!Array.isArray(valor.decisiones) || valor.decisiones.length > 500 || valor.decisiones.some((d) =>
+        !objeto(d) || !texto(d.tareaId, 100) || !d.tareaId || !['Tercerizada', 'Eliminada', 'Devuelta a revisión'].includes(String(d.tipo)) ||
+        (d.confirmada !== undefined && typeof d.confirmada !== 'boolean') ||
+        (d.tipo === 'Devuelta a revisión' && (!objeto(d.correccion) ||
+          !['descripcion', 'criticidad', 'tiempoPropuesto', 'trabajadores', 'responsableId'].every((k) => texto((d.correccion as Record<string, unknown>)[k])) ||
+          Object.keys(d.correccion).some((k) => !['descripcion', 'criticidad', 'tiempoPropuesto', 'trabajadores', 'responsableId'].includes(k))))))
+        throw new Error('Resoluciones PCM inválidas.')
+    } else if (valor.tipo === 'confirmarPCM') {
+      if (typeof valor.reconocerConflictos !== 'boolean') throw new Error('Reconocimiento de conflictos inválido.')
+    } else if (!texto(valor.motivo) || typeof valor.confirmada !== 'boolean') throw new Error('Cancelación inválida.')
   } else throw new Error('Acción no reconocida.')
 }

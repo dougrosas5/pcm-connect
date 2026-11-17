@@ -2,13 +2,13 @@
 //#region src/features/planificacion/model/modelo.ts
 function finParada(plan) {
 	const fecha = Date.parse(plan.eta) + Number(plan.horasParada) * 36e5;
-	return plan.eta && positivo(plan.horasParada) && Number.isFinite(fecha) && Math.abs(fecha) <= 864e13 ? new Date(fecha).toISOString() : "";
+	return plan.eta && positivo$1(plan.horasParada) && Number.isFinite(fecha) && Math.abs(fecha) <= 864e13 ? new Date(fecha).toISOString() : "";
 }
 function etaValida(eta) {
 	const tiempo = Date.parse(eta);
 	return Number.isFinite(tiempo) && new Date(tiempo).toISOString() === eta;
 }
-function positivo(valor) {
+function positivo$1(valor) {
 	return valor.trim() !== "" && Number.isFinite(Number(valor)) && Number(valor) > 0;
 }
 function enteroPositivo(valor) {
@@ -60,10 +60,10 @@ function erroresEnvio(plan, registro) {
 		"Ubicación"
 	]]) if (!registro.catalogos[tipo].some((e) => e.id === id && e.activo)) errores.push(`${etiqueta}: seleccioná una entrada activa.`);
 	if (!etaValida(plan.eta)) errores.push("ETA: completá una fecha y hora válidas.");
-	if (!positivo(plan.horasParada) || !finParada(plan)) errores.push("Tiempo de parada: ingresá una duración positiva válida.");
+	if (!positivo$1(plan.horasParada) || !finParada(plan)) errores.push("Tiempo de parada: ingresá una duración positiva válida.");
 	if (!plan.filas.length) errores.push("Agregá al menos una TAREA o PM.");
 	for (const fila of plan.filas) {
-		if (!positivo(fila.tiempoPropuesto)) errores.push(`${fila.id}: el tiempo individual debe ser positivo.`);
+		if (!positivo$1(fila.tiempoPropuesto)) errores.push(`${fila.id}: el tiempo individual debe ser positivo.`);
 		if (!enteroPositivo(fila.trabajadores)) errores.push(`${fila.id}: trabajadores debe ser un entero positivo.`);
 		if (!registro.catalogos.responsables.some((e) => e.id === fila.responsableId && e.activo)) errores.push(`${fila.id}: seleccioná un responsable activo.`);
 		if (!fila.descripcion || !fila.criticidad || !fila.estado || fila.tiempoOriginal === null || valorTotal(fila.ordenes) === null) errores.push(`${fila.id}: completá descripción, criticidad, estado, tiempo original y valores en la fuente y reimportá.`);
@@ -98,6 +98,206 @@ function puedeCambiarEta(actor) {
 	].includes(actor.rol);
 }
 //#endregion
+//#region src/features/revision-pcm/model/revision.ts
+function cerradaPCM(plan) {
+	return plan.estado === "Confirmada" || plan.estado === "Cancelada";
+}
+function resolucionTarea(plan, id) {
+	return Object.hasOwn(plan.revisionPCM?.tareas ?? {}, id) ? plan.revisionPCM.tareas[id].resolucion : void 0;
+}
+function tareaActiva(plan, fila) {
+	return plan.estado !== "Cancelada" && resolucionTarea(plan, fila.id)?.tipo !== "Eliminada";
+}
+function tareaInterna(plan, fila) {
+	return tareaActiva(plan, fila) && !plan.referencias[fila.responsableId]?.externo && resolucionTarea(plan, fila.id)?.tipo !== "Tercerizada";
+}
+function evaluacionVigente(plan, id) {
+	const e = Object.hasOwn(plan.evaluaciones, id) ? plan.evaluaciones[id] : void 0;
+	const version = Object.hasOwn(plan.revisionPCM?.tareas ?? {}, id) ? plan.revisionPCM.tareas[id].version : 1;
+	return e && (e.versionTarea ?? 1) === version ? e : void 0;
+}
+function prepararRevision(plan, actor, fecha) {
+	plan.revisionPCM ??= {
+		esquema: 1,
+		versionContenido: 1,
+		versionEvaluada: plan.estado === "Evaluado" ? 1 : null,
+		tareas: {},
+		conflictos: []
+	};
+	for (const fila of plan.filas) {
+		if (Object.hasOwn(plan.revisionPCM.tareas, fila.id)) continue;
+		const anterior = Object.hasOwn(plan.evaluaciones, fila.id) ? plan.evaluaciones[fila.id] : void 0;
+		Object.defineProperty(plan.revisionPCM.tareas, fila.id, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: {
+				version: 1,
+				responsableOriginalId: fila.responsableId,
+				resoluciones: [],
+				evaluaciones: anterior ? [structuredClone(anterior)] : [],
+				versiones: [{
+					...firma$1(actor, fecha),
+					version: 1,
+					fila: structuredClone(fila),
+					campos: []
+				}]
+			}
+		});
+	}
+	return plan.revisionPCM;
+}
+function firma$1(actor, fecha) {
+	return {
+		usuarioId: actor.id,
+		usuario: actor.nombre,
+		rol: actor.rol,
+		fecha
+	};
+}
+function conflictosPendientes(plan) {
+	return (plan.revisionPCM?.conflictos ?? []).filter((c) => plan.filas.some((f) => f.id === c.tareaId && tareaInterna(plan, f)));
+}
+function erroresConfirmacion(plan) {
+	const errores = [];
+	if (plan.estado !== "Evaluado") errores.push("Taller debe finalizar la evaluación vigente antes de confirmar.");
+	if (plan.revisionPCM && plan.revisionPCM.versionEvaluada !== plan.revisionPCM.versionContenido) errores.push("Hay tareas pendientes de reevaluación de la versión actual.");
+	if (!/^PCM-\d{6,}$/u.test(plan.tag)) errores.push("El TAG no es válido.");
+	if (!etaValida(plan.eta) || !finParada(plan)) errores.push("La ETA final o el tiempo de parada no es válido.");
+	if (!plan.filas.some((f) => tareaActiva(plan, f))) errores.push("Debe existir al menos una tarea activa.");
+	for (const f of plan.filas.filter((f) => tareaInterna(plan, f))) {
+		const e = evaluacionVigente(plan, f.id);
+		if (!e) errores.push(`${f.id}: pendiente de evaluación vigente.`);
+		else if (e.resultado === "Rechazada") errores.push(`${f.id}: rechazo sin resolver.`);
+	}
+	return errores;
+}
+function registrarConflictos(registro, plan, actor, fecha) {
+	if (["Borrador", "Cancelada"].includes(plan.estado)) return;
+	const revision = prepararRevision(plan, actor, fecha);
+	const agregar = (tareaId, detalle, otroPlanId) => {
+		const id = `${tareaId}:${otroPlanId ?? "parada"}:${plan.eta}`;
+		if (!revision.conflictos.some((c) => c.id === id)) revision.conflictos.push({
+			id,
+			tareaId,
+			otroPlanId,
+			detalle,
+			fecha,
+			estado: "Pendiente de reprogramación"
+		});
+	};
+	const inicio = Date.parse(plan.eta), fin = Date.parse(finParada(plan));
+	for (const fila of plan.filas.filter((f) => tareaInterna(plan, f))) {
+		const horas = evaluacionVigente(plan, fila.id)?.tiempoAceptado ?? fila.tiempoPropuesto;
+		if (Number(horas) > Number(plan.horasParada)) agregar(fila.id, `${fila.id}: duración de ${horas} h mayor que la parada de ${plan.horasParada} h.`);
+		for (const otro of registro.planes) {
+			if (otro.id === plan.id || ["Cancelada", "Borrador"].includes(otro.estado)) continue;
+			if (!(inicio < Date.parse(finParada(otro)) && Date.parse(otro.eta) < fin)) continue;
+			const afectadas = otro.filas.filter((f) => tareaInterna(otro, f) && (f.responsableId === fila.responsableId || otro.remolcadorId === plan.remolcadorId));
+			if (afectadas.length) agregar(fila.id, `${fila.id}: ventana solapada con ${otro.tag} (${afectadas.map((f) => f.id).join(", ")}), por remolcador o responsable compartido. Verificar disponibilidad.`, otro.id);
+		}
+	}
+}
+function resolver(plan, decision, registro, actor, fecha) {
+	const fila = plan.filas.find((f) => f.id === decision.tareaId);
+	if (!fila || evaluacionVigente(plan, fila.id)?.resultado !== "Rechazada" || resolucionTarea(plan, fila.id)) throw new Error(`${decision.tareaId}: solo se pueden resolver rechazos pendientes; las aceptadas están congeladas.`);
+	const revision = prepararRevision(plan, actor, fecha);
+	const tarea = revision.tareas[fila.id];
+	const resolucion = {
+		...firma$1(actor, fecha),
+		tipo: decision.tipo,
+		versionTarea: tarea.version
+	};
+	if (decision.tipo === "Eliminada" && !decision.confirmada) throw new Error("Confirmá la eliminación lógica de la tarea.");
+	if (decision.tipo === "Devuelta a revisión") {
+		const cambios = decision.correccion;
+		if (!cambios || !cambios.descripcion.trim() || !cambios.criticidad.trim() || !positivo$1(cambios.tiempoPropuesto) || !enteroPositivo(cambios.trabajadores)) throw new Error("Completá la corrección: descripción, criticidad, horas positivas y trabajadores enteros positivos.");
+		const responsable = registro.catalogos.responsables.find((r) => r.id === cambios.responsableId && r.activo && !r.externo);
+		if (!responsable) throw new Error("La reevaluación requiere un responsable interno activo; para ejecución externa elegí Tercerizar.");
+		const campos = Object.keys(cambios).filter((k) => fila[k] !== cambios[k]);
+		if (!campos.length) throw new Error("Modificá al menos un campo antes de reenviar a Taller.");
+		fila.descripcion = cambios.descripcion.trim();
+		fila.criticidad = cambios.criticidad.trim();
+		fila.tiempoPropuesto = cambios.tiempoPropuesto;
+		fila.trabajadores = cambios.trabajadores;
+		fila.responsableId = cambios.responsableId;
+		plan.referencias[responsable.id] = structuredClone(responsable);
+		tarea.version++;
+		tarea.versiones.push({
+			...firma$1(actor, fecha),
+			version: tarea.version,
+			fila: structuredClone(fila),
+			campos
+		});
+		revision.versionContenido++;
+		plan.estado = "En reevaluación";
+	}
+	tarea.resolucion = resolucion;
+	tarea.resoluciones.push(resolucion);
+}
+function aplicarRevision(registro, comando, actor, fecha) {
+	if (!["Planificador", "Administrador"].includes(actor.rol)) throw new Error("Solo PCM autorizado puede revisar, confirmar o cancelar.");
+	const plan = registro.planes.find((p) => p.id === comando.planId);
+	if (!plan || plan.version !== comando.version) throw new Error("La planificación cambió. Actualizá y reabrí antes de guardar.");
+	if (cerradaPCM(plan)) throw new Error("La planificación está confirmada o cancelada; solo permite consulta.");
+	const anterior = structuredClone(plan);
+	const revision = prepararRevision(plan, actor, fecha);
+	if (comando.tipo === "guardarRevision") {
+		if (!["Evaluado", "En reevaluación"].includes(plan.estado)) throw new Error("Taller debe finalizar la evaluación antes de la revisión PCM.");
+		if (!comando.decisiones.length) throw new Error("No hay resoluciones nuevas para guardar.");
+		if (new Set(comando.decisiones.map((d) => d.tareaId)).size !== comando.decisiones.length) throw new Error("Hay resoluciones duplicadas.");
+		for (const decision of comando.decisiones) {
+			resolver(plan, decision, registro, actor, fecha);
+			registro.historial.push({
+				...firma$1(actor, fecha),
+				accion: decision.tipo,
+				entidad: plan.tag,
+				planId: plan.id,
+				tareaId: decision.tareaId,
+				anterior: anterior.filas.find((f) => f.id === decision.tareaId),
+				nuevo: structuredClone(revision.tareas[decision.tareaId])
+			});
+		}
+	} else if (comando.tipo === "confirmarPCM") {
+		const errores = erroresConfirmacion(plan);
+		if (errores.length) throw new Error(errores.join("\n"));
+		const conflictos = conflictosPendientes(plan);
+		if (conflictos.length && !comando.reconocerConflictos) throw new Error("Reconocé explícitamente los conflictos pendientes de reprogramación.");
+		for (const c of conflictos) c.reconocimiento = firma$1(actor, fecha);
+		if (conflictos.length) registro.historial.push({
+			...firma$1(actor, fecha),
+			accion: "Reconocer alertas",
+			entidad: plan.tag,
+			planId: plan.id,
+			anterior: null,
+			nuevo: structuredClone(conflictos)
+		});
+		plan.estado = "Confirmada";
+		revision.confirmacion = {
+			...firma$1(actor, fecha),
+			version: plan.version + 1,
+			conAdvertencias: conflictos.length > 0
+		};
+	} else {
+		if (!comando.confirmada || !comando.motivo.trim()) throw new Error("La cancelación requiere motivo y confirmación explícita.");
+		plan.estado = "Cancelada";
+		revision.cancelacion = {
+			...firma$1(actor, fecha),
+			motivo: comando.motivo.trim()
+		};
+	}
+	plan.version++;
+	plan.actualizado = fecha;
+	registro.historial.push({
+		...firma$1(actor, fecha),
+		accion: comando.tipo,
+		entidad: plan.tag,
+		planId: plan.id,
+		anterior,
+		nuevo: structuredClone(plan)
+	});
+}
+//#endregion
 //#region src/features/planificacion/model/comandos.ts
 function aplicarComando(actual, comando, actor, solicitud, fecha) {
 	if (actual.solicitudes[solicitud] !== void 0) return actual;
@@ -107,10 +307,14 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		siguiente.historial.push({
 			fecha,
 			usuario: actor.nombre,
+			usuarioId: actor.id,
+			rol: actor.rol,
 			accion: comando.tipo,
 			entidad,
 			anterior,
-			nuevo
+			nuevo,
+			..."planId" in comando ? { planId: comando.planId } : {},
+			..."tareaId" in comando ? { tareaId: comando.tareaId } : {}
 		});
 	}
 	if (comando.tipo === "guardar") {
@@ -119,6 +323,7 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		if (anterior && anterior.planificadorId !== actor.id && actor.rol !== "Administrador") throw new Error("La planificación pertenece a otro planificador.");
 		if (anterior && (anterior.estado !== "Borrador" || anterior.version !== comando.plan.version)) throw new Error("La planificación cambió o ya fue enviada. Volvé a abrirla.");
 		const plan = structuredClone(comando.plan);
+		delete plan.revisionPCM;
 		if (!anterior && !etaValida(plan.eta)) throw new Error("ETA: completá una fecha y hora válidas antes de crear la planificación.");
 		if (anterior && plan.eta !== anterior.eta) throw new Error("La ETA final se modifica desde Validación Taller, con comentario e historial.");
 		plan.etaInicial = anterior ? anterior.etaInicial ?? anterior.eta : plan.eta;
@@ -134,7 +339,7 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 				if (oms.has(om.numero)) throw new Error(`OM ${om.numero} duplicada.`);
 				oms.add(om.numero);
 			}
-			const conflicto = actual.planes.find((p) => p.id !== plan.id && p.filas.some((f) => f.id === fila.id || f.ordenes.some((om) => oms.has(om.numero) || fila.ordenes.some((o) => o.numero === om.numero))));
+			const conflicto = actual.planes.find((p) => p.id !== plan.id && p.filas.some((f) => tareaActiva(p, f) && (f.id === fila.id || f.ordenes.some((om) => oms.has(om.numero) || fila.ordenes.some((o) => o.numero === om.numero)))));
 			if (conflicto) throw new Error(`${fila.id}: conflicto con la planificación ${conflicto.tag}.`);
 		}
 		if (comando.enviar) {
@@ -158,6 +363,7 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		if (!puedeCambiarEta(actor)) throw new Error("Solo PCM o un Supervisor de Taller autorizado puede modificar la ETA final.");
 		const plan = siguiente.planes.find((p) => p.id === comando.planId);
 		if (!plan || plan.version !== comando.version) throw new Error("La planificación cambió. Actualizá los datos antes de modificar la ETA final.");
+		if (cerradaPCM(plan)) throw new Error("La planificación confirmada o cancelada es de solo consulta.");
 		if (!etaValida(comando.eta)) throw new Error("Ingresá una ETA final válida.");
 		if (!comando.comentario.trim()) throw new Error("El cambio de ETA final requiere un comentario.");
 		if (comando.eta === plan.eta) throw new Error("La ETA final no cambió; no se registró un evento duplicado.");
@@ -169,6 +375,7 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 			fecha,
 			usuarioId: actor.id,
 			usuario: actor.nombre,
+			rol: actor.rol,
 			anterior: plan.eta,
 			nuevo: comando.eta,
 			comentario: comando.comentario.trim(),
@@ -177,8 +384,23 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		plan.eta = comando.eta;
 		plan.actualizado = fecha;
 		plan.version++;
+		registrarConflictos(siguiente, plan, actor, fecha);
+		for (const otro of siguiente.planes) {
+			if (otro.id === plan.id || ["Cancelada", "Borrador"].includes(otro.estado)) continue;
+			const antes = structuredClone(otro);
+			const candidato = structuredClone(otro);
+			const cantidad = otro.revisionPCM?.conflictos.length ?? 0;
+			registrarConflictos(siguiente, candidato, actor, fecha);
+			if ((candidato.revisionPCM?.conflictos.length ?? 0) > cantidad) {
+				otro.revisionPCM = candidato.revisionPCM;
+				otro.version++;
+				otro.actualizado = fecha;
+				auditar(otro.tag, antes, structuredClone(otro));
+			}
+		}
 		auditar(plan.tag, anterior, plan);
-	} else if (comando.tipo === "catalogo") {
+	} else if (comando.tipo === "guardarRevision" || comando.tipo === "confirmarPCM" || comando.tipo === "cancelarPCM") aplicarRevision(siguiente, comando, actor, fecha);
+	else if (comando.tipo === "catalogo") {
 		if (actor.rol !== "Administrador") throw new Error("Solo Administración puede modificar catálogos.");
 		const entrada = {
 			...comando.entrada,
@@ -206,24 +428,50 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 		});
 		auditar("Fuente Excel", actual.fuente, comando.tareas);
 	} else {
-		if (actor.rol !== "Taller" && actor.rol !== "Administrador") throw new Error("Solo Taller puede evaluar.");
+		if (![
+			"Taller",
+			"Supervisor Taller",
+			"Administrador"
+		].includes(actor.rol)) throw new Error("Solo Taller puede evaluar.");
 		const plan = siguiente.planes.find((p) => p.id === comando.planId);
-		if (!plan || !["Enviado a Taller", "En evaluación"].includes(plan.estado)) throw new Error("La planificación no está disponible para evaluación.");
+		if (!plan || ![
+			"Enviado a Taller",
+			"En evaluación",
+			"En reevaluación"
+		].includes(plan.estado)) throw new Error("La planificación no está disponible para evaluación.");
+		if (comando.version !== void 0 && comando.version !== plan.version) throw new Error("La planificación cambió. Reabrí la versión vigente.");
 		const anterior = structuredClone(plan);
+		const revision = prepararRevision(plan, actor, fecha);
 		if (comando.tipo === "evaluar") {
 			const fila = plan.filas.find((f) => f.id === comando.tareaId);
-			if (!fila || plan.referencias[fila.responsableId]?.externo) throw new Error("La tarea no requiere evaluación de Taller interno.");
+			if (!fila || !tareaInterna(plan, fila)) throw new Error("La tarea no requiere evaluación de Taller interno.");
+			if (evaluacionVigente(plan, fila.id)) throw new Error("La tarea ya fue evaluada en esta versión; su decisión está congelada.");
 			if (!["Aceptada", "Rechazada"].includes(comando.resultado) || comando.resultado === "Rechazada" && !comando.motivo.trim()) throw new Error("El rechazo requiere un motivo.");
-			plan.evaluaciones[fila.id] = {
-				resultado: comando.resultado,
-				motivo: comando.motivo.trim(),
-				usuario: actor.nombre,
-				fecha
-			};
-			plan.estado = "En evaluación";
+			const tiempoAceptado = comando.tiempoAceptado ?? fila.tiempoPropuesto;
+			const trabajadoresAceptados = comando.trabajadoresAceptados ?? fila.trabajadores;
+			if (!positivo$1(tiempoAceptado) || !enteroPositivo(trabajadoresAceptados)) throw new Error("Las horas deben ser positivas y los trabajadores enteros positivos.");
+			Object.defineProperty(plan.evaluaciones, fila.id, {
+				enumerable: true,
+				configurable: true,
+				writable: true,
+				value: {
+					resultado: comando.resultado,
+					motivo: comando.motivo.trim(),
+					usuario: actor.nombre,
+					fecha,
+					usuarioId: actor.id,
+					versionTarea: revision.tareas[fila.id].version,
+					tiempoAceptado,
+					trabajadoresAceptados
+				}
+			});
+			revision.tareas[fila.id].evaluaciones.push(structuredClone(plan.evaluaciones[fila.id]));
+			if (resolucionTarea(plan, fila.id)?.tipo === "Devuelta a revisión") delete revision.tareas[fila.id].resolucion;
+			plan.estado = revision.versionContenido > 1 ? "En reevaluación" : "En evaluación";
 		} else {
-			if (plan.filas.some((f) => !plan.referencias[f.responsableId]?.externo && !Object.hasOwn(plan.evaluaciones, f.id))) throw new Error("Hay tareas internas pendientes de evaluación.");
+			if (plan.filas.some((f) => tareaInterna(plan, f) && !evaluacionVigente(plan, f.id))) throw new Error("Hay tareas internas pendientes de evaluación.");
 			plan.estado = "Evaluado";
+			revision.versionEvaluada = revision.versionContenido;
 		}
 		plan.actualizado = fecha;
 		plan.version++;
@@ -232,6 +480,59 @@ function aplicarComando(actual, comando, actor, solicitud, fecha) {
 	siguiente.revision++;
 	siguiente.solicitudes[solicitud] = siguiente.revision;
 	return siguiente;
+}
+//#endregion
+//#region src/features/revision-pcm/model/validacion.ts
+var objeto$1 = (v) => typeof v === "object" && v !== null && !Array.isArray(v);
+var texto$1 = (v) => typeof v === "string";
+var positivo = (v) => Number.isSafeInteger(v) && Number(v) > 0;
+function firma(v) {
+	return objeto$1(v) && texto$1(v.usuarioId) && texto$1(v.usuario) && texto$1(v.fecha) && etaValida(v.fecha) && [
+		"Planificador",
+		"Taller",
+		"Supervisor Taller",
+		"Administrador",
+		"Consulta"
+	].includes(String(v.rol));
+}
+function evaluacion(v) {
+	return objeto$1(v) && ["Aceptada", "Rechazada"].includes(String(v.resultado)) && texto$1(v.motivo) && texto$1(v.usuario) && texto$1(v.fecha) && etaValida(v.fecha) && (v.versionTarea === void 0 || positivo(v.versionTarea)) && (v.tiempoAceptado === void 0 || texto$1(v.tiempoAceptado) && Number.isFinite(Number(v.tiempoAceptado)) && Number(v.tiempoAceptado) > 0) && (v.trabajadoresAceptados === void 0 || texto$1(v.trabajadoresAceptados) && /^\d+$/u.test(v.trabajadoresAceptados) && positivo(Number(v.trabajadoresAceptados)));
+}
+function resolucion(v) {
+	return objeto$1(v) && firma(v) && positivo(v.versionTarea) && [
+		"Tercerizada",
+		"Eliminada",
+		"Devuelta a revisión"
+	].includes(String(v.tipo));
+}
+function validarRevisionPersistida(p) {
+	if (p.evaluaciones !== void 0 && (!objeto$1(p.evaluaciones) || !Object.values(p.evaluaciones).every(evaluacion))) throw new Error("Evaluaciones guardadas inválidas; se conservó el contenido original.");
+	const r = p.revisionPCM;
+	if (r === void 0) {
+		if ([
+			"Confirmada",
+			"Cancelada",
+			"En reevaluación"
+		].includes(String(p.estado))) throw new Error("Falta la trazabilidad de revisión PCM; se conservó el contenido original.");
+		return;
+	}
+	const fallar = () => {
+		throw new Error("Revisión PCM guardada inválida; se conservó el contenido original.");
+	};
+	if (!objeto$1(r) || r.esquema !== 1 || !positivo(r.versionContenido) || !(r.versionEvaluada === null || positivo(r.versionEvaluada) && Number(r.versionEvaluada) <= Number(r.versionContenido)) || !objeto$1(r.tareas) || !Array.isArray(r.conflictos)) return fallar();
+	const ids = p.filas.map((f) => f.id);
+	if (Object.keys(r.tareas).length !== ids.length) return fallar();
+	for (const [id, t] of Object.entries(r.tareas)) {
+		if (!ids.includes(id) || !objeto$1(t) || !positivo(t.version) || !texto$1(t.responsableOriginalId) || !Array.isArray(t.resoluciones) || !t.resoluciones.every(resolucion) || t.resolucion !== void 0 && (!resolucion(t.resolucion) || JSON.stringify(t.resolucion) !== JSON.stringify(t.resoluciones.at(-1))) || !Array.isArray(t.evaluaciones) || !t.evaluaciones.every(evaluacion) || !Array.isArray(t.versiones) || t.versiones.length !== t.version) return fallar();
+		for (const [indice, v] of t.versiones.entries()) {
+			if (!objeto$1(v) || !firma(v) || v.version !== indice + 1 || !objeto$1(v.fila) || v.fila.id !== id || !Array.isArray(v.campos) || !v.campos.every(texto$1)) return fallar();
+			validarFuente([v.fila]);
+		}
+	}
+	if (r.conflictos.some((c) => !objeto$1(c) || !texto$1(c.id) || !ids.includes(String(c.tareaId)) || !texto$1(c.detalle) || !texto$1(c.fecha) || !etaValida(c.fecha) || c.estado !== "Pendiente de reprogramación" || c.reconocimiento !== void 0 && !firma(c.reconocimiento))) return fallar();
+	if (r.confirmacion !== void 0 && (!objeto$1(r.confirmacion) || !firma(r.confirmacion) || !positivo(r.confirmacion.version) || typeof r.confirmacion.conAdvertencias !== "boolean")) return fallar();
+	if (r.cancelacion !== void 0 && (!objeto$1(r.cancelacion) || !firma(r.cancelacion) || !texto$1(r.cancelacion.motivo) || !r.cancelacion.motivo.trim())) return fallar();
+	if (p.estado === "Confirmada" && !r.confirmacion || p.estado === "Cancelada" && !r.cancelacion) return fallar();
 }
 //#endregion
 //#region src/features/planificacion/model/validacion.ts
@@ -262,6 +563,7 @@ function validarComando(valor) {
 			"trabajadores",
 			"responsableId"
 		].every((k) => texto(f[k], 100)))) throw new Error("Campos de propuesta inválidos.");
+		validarRevisionPersistida(p);
 	} else if (valor.tipo === "cambiarEta") {
 		if (!texto(valor.planId, 80) || !valor.planId || !Number.isSafeInteger(valor.version) || Number(valor.version) < 1 || !texto(valor.eta, 100) || !etaValida(valor.eta) || !texto(valor.comentario) || !valor.comentario.trim()) throw new Error("Ingresá una ETA final válida y un comentario para registrar el cambio.");
 	} else if (valor.tipo === "catalogo") {
@@ -276,8 +578,36 @@ function validarComando(valor) {
 		validarFuente(valor.tareas);
 	} else if (valor.tipo === "evaluar") {
 		if (!texto(valor.planId, 80) || !texto(valor.tareaId, 100) || !["Aceptada", "Rechazada"].includes(String(valor.resultado)) || !texto(valor.motivo)) throw new Error("Evaluación inválida.");
+		if (valor.version !== void 0 && (!Number.isSafeInteger(valor.version) || Number(valor.version) < 1) || valor.tiempoAceptado !== void 0 && !texto(valor.tiempoAceptado, 100) || valor.trabajadoresAceptados !== void 0 && !texto(valor.trabajadoresAceptados, 100)) throw new Error("Valores de evaluación inválidos.");
 	} else if (valor.tipo === "finalizar") {
-		if (!texto(valor.planId, 80)) throw new Error("Planificación inválida.");
+		if (!texto(valor.planId, 80) || valor.version !== void 0 && (!Number.isSafeInteger(valor.version) || Number(valor.version) < 1)) throw new Error("Planificación inválida.");
+	} else if ([
+		"guardarRevision",
+		"confirmarPCM",
+		"cancelarPCM"
+	].includes(String(valor.tipo))) {
+		if (!texto(valor.planId, 80) || !valor.planId || !Number.isSafeInteger(valor.version) || Number(valor.version) < 1) throw new Error("Planificación o versión de revisión inválida.");
+		if (valor.tipo === "guardarRevision") {
+			if (!Array.isArray(valor.decisiones) || valor.decisiones.length > 500 || valor.decisiones.some((d) => !objeto(d) || !texto(d.tareaId, 100) || !d.tareaId || ![
+				"Tercerizada",
+				"Eliminada",
+				"Devuelta a revisión"
+			].includes(String(d.tipo)) || d.confirmada !== void 0 && typeof d.confirmada !== "boolean" || d.tipo === "Devuelta a revisión" && (!objeto(d.correccion) || ![
+				"descripcion",
+				"criticidad",
+				"tiempoPropuesto",
+				"trabajadores",
+				"responsableId"
+			].every((k) => texto(d.correccion[k])) || Object.keys(d.correccion).some((k) => ![
+				"descripcion",
+				"criticidad",
+				"tiempoPropuesto",
+				"trabajadores",
+				"responsableId"
+			].includes(k))))) throw new Error("Resoluciones PCM inválidas.");
+		} else if (valor.tipo === "confirmarPCM") {
+			if (typeof valor.reconocerConflictos !== "boolean") throw new Error("Reconocimiento de conflictos inválido.");
+		} else if (!texto(valor.motivo) || typeof valor.confirmada !== "boolean") throw new Error("Cancelación inválida.");
 	} else throw new Error("Acción no reconocida.");
 }
 //#endregion

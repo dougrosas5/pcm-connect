@@ -1,5 +1,9 @@
 # PCM Connect — alcance acordado
 
+> **Sistema definitivo de ETA (17/11/2026):** [Contrato de ETA Inicial, Final y Predictiva](ETA.md). La Predictiva es manual e independiente; únicamente **Confirmar ETA predictiva**, con autorización, confirmación explícita y motivo, la copia a la Final y activa auditoría, revisión operativa y alertas sin alterar la Inicial ni las tareas aceptadas. Sustituye toda definición anterior que deje pendiente su lógica. Especificación aprobada; implementación pendiente de autorización, fuera de la Fase 1 de diseño.
+
+> **Decisiones definitivas del Módulo 3 (12/11/2026):** [Revisión y Confirmación PCM](REVISION_PCM.md) sustituye las definiciones pendientes anteriores: Taller evalúa la TAREA/PM completa; PCM puede tercerizar, eliminar lógicamente o corregir y reenviar una rechazada. Confirmación y cancelación conservan trazabilidad. ETA inicial inmutable; conflictos de ETA final permiten confirmar con reconocimiento y mantienen advertencias. Las reglas por OM siguientes pertenecen únicamente al Archivo local histórico.
+
 > **Módulo 2, primera iteración (10/11/2026):** [Validación Taller y ETA](VALIDACION_TALLER.md) incorpora bandeja, filtros, detalle y cambios auditados de ETA sobre los mismos planes v1.3. La ETA inicial queda fija al crear; `eta` es la ETA final operativa. El nuevo pedido deja pendientes la unidad de evaluación (tarea/OM) y la resolución de rechazos: no imponer las reglas históricas siguientes sobre el nuevo módulo. Programación, capacidad y cierre continúan pendientes.
 
 > **Versión vigente del Módulo 1: v1.3 (03/11/2026).** Consultar [Módulo 1 v1.3](MODULO_1_V13.md). El pedido nuevo sustituye las reglas anteriores: OM con «Valor aprobado», propuesta agrupada por tarea/PM, evaluación de tarea completa, responsables internos/externos, catálogos e integración de servidor. Las secciones siguientes documentan la demo histórica y las etapas posteriores; no deben imponerse sobre el contrato v1.3. Los datos anteriores siguen en Archivo local.
@@ -38,7 +42,7 @@ La tabla de preparación muestra una fila por **tarea**, con las OM juntas y una
 
 ## Pantallas previstas en bocetos
 - Cronograma / preparación de escala y búsqueda múltiple de números de tarea.
-- Agenda de arribos (ETA y ETA(F) por aclarar, junto con campos precisos de arribos).
+- Agenda de arribos con ETA Inicial, Final operativa y Predictiva manual independientes, conforme al [contrato definitivo de ETA](ETA.md); implementación pendiente de autorización.
 - Revisión/aprobación de OM por Taller y confirmación PCM.
 - Asignaciones con tarjetas de trabajador, drag-and-drop y detalle de OM; carga y tiempo.
 - Kanban semanal de OM y estado de trabajo.
@@ -61,7 +65,9 @@ No equiparar estado de PCM Connect con cierre oficial de OM en el ERP externo.
 - Datos de ejemplo no son hechos ni datos operativos de empresa. Costos faltantes se muestran «Sin definir», nunca un falso 0.
 
 ## Decisiones pendientes que no se deben adivinar
-- ETA vs ETA(F) y campos exactos de agenda de arribos.
+
+La relación entre ETA Inicial, Final y Predictiva ya está definida en [Sistema de ETA](ETA.md); no es una decisión pendiente. El desarrollo de esa lógica sigue sujeto a autorización expresa.
+
 - Forma en que los tres encargados se identifican/autentican en producción. En demo, roles simulados claramente marcados.
 - Cuándo comienza/termina el cómputo de una jornada, turnos y reglas laborales de horas.
 - Reglas definitivas de horario, descansos, especialidad, personal tercerizado y distribución de OM con varias personas.

@@ -161,7 +161,8 @@ export function agregarTareas(
       (p) =>
         p.id !== plan.id &&
         p.filas.some(
-          (f) => f.id === id || f.ordenes.some((om) => ordenes.some((o) => o.numero === om.numero))
+          (f) => p.estado !== 'Cancelada' && p.revisionPCM?.tareas[f.id]?.resolucion?.tipo !== 'Eliminada' &&
+            (f.id === id || f.ordenes.some((om) => ordenes.some((o) => o.numero === om.numero)))
         )
     )
     if (conflicto) {

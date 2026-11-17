@@ -1,18 +1,18 @@
 .m1 {
-  --m1-error: #863725;
-  --m1-aviso: #78501d;
-  --m1-suave: #f3f3f0;
+  --m1-error: var(--estado-rechazado-texto);
+  --m1-aviso: var(--estado-advertencia-texto);
+  --m1-suave: var(--color-superficie-suave);
   line-height: 1.45;
 }
 .m1-panel {
   background: var(--superficie);
   border: 1px solid var(--borde);
-  border-radius: 6px;
-  padding: 18px;
-  margin-block: 18px;
+  border-radius: var(--radio-panel);
+  padding: var(--espacio-4);
+  margin-block: var(--espacio-4);
 }
 .m1 h2 {
-  font-size: 19px;
+  font-size: var(--texto-seccion);
   margin: 0 0 12px;
 }
 .m1 h3 {
@@ -21,13 +21,13 @@
 .m1-cabecera {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: var(--espacio-4);
 }
 .m1-campo {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  font-size: 14px;
+  gap: 6px;
+  font-size: var(--texto-sm);
   font-weight: 600;
   min-width: 0;
 }
@@ -47,8 +47,10 @@
   background: var(--m1-suave);
 }
 .m1-modo {
-  border-bottom: 1px solid var(--borde);
-  padding-bottom: 14px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-panel);
+  background: var(--superficie);
+  padding: var(--espacio-3) var(--espacio-4);
   font-size: 13px;
   margin-block: 14px;
   display: flex;
@@ -99,9 +101,10 @@
   margin-block: 20px;
 }
 .m1-error {
-  padding: 14px;
-  border: 1px solid var(--m1-error);
-  background: var(--superficie);
+  padding: var(--espacio-3) var(--espacio-4);
+  border: 1px solid var(--estado-rechazado-borde);
+  border-radius: var(--radio-control);
+  background: var(--estado-rechazado-fondo);
   color: var(--m1-error);
   white-space: pre-line;
   overflow-wrap: anywhere;
@@ -187,7 +190,7 @@
 .m1-catalogo td,
 .m1-taller th,
 .m1-taller td {
-  padding: 12px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--borde);
   vertical-align: top;
 }
@@ -246,15 +249,6 @@
 }
 .m1 button:disabled {
   opacity: 0.65;
-}
-.m1 .boton-primario {
-  background: var(--grafito);
-  border-color: var(--grafito);
-}
-.m1 .boton-primario:hover:enabled {
-  background: var(--acento);
-  border-color: var(--acento);
-  color: var(--superficie);
 }
 @media (max-width: 1100px) {
   .m1-cabecera {

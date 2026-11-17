@@ -6,12 +6,13 @@ import { descargarTexto } from '../utils/descargas'
 import Catalogos from '../features/catalogos/components/Catalogos'
 import Importador from '../features/planificacion/components/Importador'
 import ValidacionTaller from '../features/validacion-taller/components/ValidacionTaller'
+import RevisionPCM from '../features/revision-pcm/components/RevisionPCM'
 import TablaPropuesta from '../features/planificacion/components/TablaPropuesta'
 import CabeceraPlan from '../features/planificacion/components/CabeceraPlan'
 import { useRegistroPCM } from './hooks/useRegistroPCM'
 import '../styles/operaciones.css'
 
-export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'catalogos' }) {
+export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'catalogos' | 'revision' }) {
   const {
     registro, setRegistro, actor, setActor, sesion, setSesion, plan, setPlan,
     listo, setListo, ocupado, setOcupado, sucio, setSucio, error, setError,
@@ -186,6 +187,7 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
               ejecutar={mandar}
             />
           )}
+          {vista === 'revision' && <RevisionPCM registro={registro} actor={actor} ocupado={ocupado} cambiosPCM={sucio} error={error} ejecutar={mandar} />}
           {vista === 'taller' && (
             <ValidacionTaller
               registro={registro}

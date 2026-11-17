@@ -1,12 +1,14 @@
 # PCM Connect
 
-Aplicación de planificación de mantenimiento y coordinación entre PCM y Taller. Permite preparar trabajos, evaluar la viabilidad de cada orden de mantenimiento (OM) y registrar la decisión de PCM con su historial.
+Aplicación de planificación de mantenimiento y coordinación entre PCM y Taller. Permite preparar trabajos, evaluar la viabilidad de cada TAREA/PM completa con sus OM y registrar las decisiones de PCM con su historial.
 
 ## Módulo 1 v1.3
 
-La versión nueva permite preparar tareas/PM con OM de «Valor aprobado», importar `.xlsx`/CSV con revisión de cambios, administrar catálogos, guardar borradores con ETA y enviar propuestas a Taller. Conserva tiempo original/propuesto e historial. **Validación Taller** muestra bandeja, detalle y cambios auditados de ETA; las nuevas decisiones de evaluación están pendientes de definición. La demo anterior sigue disponible en **Archivo local**.
+La versión nueva permite preparar tareas/PM con OM de «Valor aprobado», importar `.xlsx`/CSV con revisión de cambios, administrar catálogos, guardar borradores con ETA y enviar propuestas a Taller. Conserva tiempo original/propuesto e historial. **Validación Taller** evalúa tareas completas y registra cambios de ETA. **Revisión PCM** permite tercerizar, eliminar lógicamente o corregir y reenviar rechazos, guardar decisiones parciales, confirmar con reconocimiento de advertencias y cancelar con motivo. La demo anterior sigue disponible en **Archivo local**.
 
 Sin configuración funciona como demo local explícita. Incluye una API para Vercel y migraciones Supabase para autenticación y persistencia multiusuario, que deben habilitarse con la infraestructura autorizada. No se incluyen credenciales. Consultar [configuración de servidor](docs/MODULO_1_V13.md), [Validación Taller y ETA](docs/VALIDACION_TALLER.md) y [arquitectura](docs/ARQUITECTURA.md).
+
+El [sistema definitivo de ETA](docs/ETA.md), especificado el 17/11/2026, distingue Inicial inmutable, Final operativa y Predictiva manual con confirmación explícita auditada. La Predictiva y su confirmación **todavía no están implementadas**; su desarrollo espera autorización y no pertenece a la Fase 1 de diseño.
 
 ## Funciones de la demo histórica (Archivo local)
 
@@ -110,7 +112,7 @@ Las pruebas cubren búsqueda, validaciones, persistencia y reglas del flujo PCM�
 ## Organización
 
 - `src/app/`: navegación, composición y estado compartido.
-- `src/features/`: Planificación, Catálogos, Validación Taller y Archivo local, con componentes y reglas propios.
+- `src/features/`: Planificación, Catálogos, Validación Taller, Revisión PCM y Archivo local, con componentes y reglas propios.
 - `src/components/`: componentes compartidos.
 - `src/services/pcm/`: persistencia y sesión.
 - `src/types/`: contrato compartido; `src/utils/`: utilidades; `src/styles/`: CSS global.
@@ -124,6 +126,7 @@ Desarrollado con React, TypeScript y Vite; CSS propio y Oxlint.
 
 - [Arquitectura y responsabilidades](docs/ARQUITECTURA.md)
 - [Validación Taller y ETA](docs/VALIDACION_TALLER.md)
+- [Revisión y Confirmación PCM](docs/REVISION_PCM.md)
 - [Requisitos funcionales](docs/PCM_REQUISITOS.md)
 - [Diseño Graphite](docs/DISEÑO_GRAPHITE.md)
 - [Costos estimados y supuestos](docs/COSTOS_ESTIMADOS_PYG.md)

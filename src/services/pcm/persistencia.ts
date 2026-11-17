@@ -45,7 +45,7 @@ export function validarRegistro(valor: unknown): asserts valor is Registro {
     if (
       !p.referencias ||
       !p.evaluaciones ||
-      !['Borrador', 'Enviado a Taller', 'En evaluación', 'Evaluado'].includes(p.estado)
+      !['Borrador', 'Enviado a Taller', 'En evaluación', 'Evaluado', 'En reevaluación', 'Confirmada', 'Cancelada'].includes(p.estado)
     )
       throw new Error('La planificación guardada está incompleta; no se modificó.')
   }

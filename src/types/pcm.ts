@@ -18,12 +18,42 @@ export type FilaPropuesta = TareaFuente & {
   trabajadores: string
   responsableId: string
 }
-export type Estado = 'Borrador' | 'Enviado a Taller' | 'En evaluación' | 'Evaluado'
+export type Estado = 'Borrador' | 'Enviado a Taller' | 'En evaluación' | 'Evaluado' | 'En reevaluación' | 'Confirmada' | 'Cancelada'
 export type Evaluacion = {
   resultado: 'Aceptada' | 'Rechazada'
   motivo: string
   usuario: string
   fecha: string
+  usuarioId?: string
+  versionTarea?: number
+  tiempoAceptado?: string
+  trabajadoresAceptados?: string
+}
+export type Firma = { usuarioId: string; usuario: string; rol: Rol; fecha: string }
+export type ResolucionPCM = Firma & { tipo: 'Tercerizada' | 'Eliminada' | 'Devuelta a revisión'; versionTarea: number }
+export type CorreccionPCM = Pick<FilaPropuesta, 'descripcion' | 'criticidad' | 'tiempoPropuesto' | 'trabajadores' | 'responsableId'>
+export type DecisionPCM = { tareaId: string; tipo: ResolucionPCM['tipo']; correccion?: CorreccionPCM; confirmada?: boolean }
+export type RevisionTarea = {
+  version: number
+  responsableOriginalId: string
+  resolucion?: ResolucionPCM
+  resoluciones: ResolucionPCM[]
+  evaluaciones: Evaluacion[]
+  versiones: (Firma & { version: number; fila: FilaPropuesta; campos: string[] })[]
+}
+export type ConflictoPCM = {
+  id: string; tareaId: string; otroPlanId?: string; detalle: string; fecha: string
+  estado: 'Pendiente de reprogramación'
+  reconocimiento?: Firma
+}
+export type RevisionPCM = {
+  esquema: 1
+  versionContenido: number
+  versionEvaluada: number | null
+  tareas: Record<string, RevisionTarea>
+  conflictos: ConflictoPCM[]
+  confirmacion?: Firma & { version: number; conAdvertencias: boolean }
+  cancelacion?: Firma & { motivo: string }
 }
 export type Plan = {
   id: string
@@ -46,6 +76,7 @@ export type Plan = {
   // Nombres congelados al enviar; un catálogo puede editarse o desactivarse después.
   referencias: Record<string, EntradaCatalogo>
   evaluaciones: Record<string, Evaluacion>
+  revisionPCM?: RevisionPCM
 }
 export type CambioEta = {
   fecha: string
@@ -55,6 +86,7 @@ export type CambioEta = {
   nuevo: string
   comentario: string
   revisionDisponibilidad: 'pendiente'
+  rol?: Rol
 }
 export type Evento = {
   fecha: string
@@ -63,6 +95,10 @@ export type Evento = {
   entidad: string
   anterior: unknown
   nuevo: unknown
+  usuarioId?: string
+  rol?: Rol
+  planId?: string
+  tareaId?: string
 }
 export type Importacion = {
   id: string
@@ -88,5 +124,8 @@ export type Comando =
   | { tipo: 'cambiarEta'; planId: string; version: number; eta: string; comentario: string }
   | { tipo: 'catalogo'; catalogo: TipoCatalogo; entrada: EntradaCatalogo }
   | { tipo: 'importar'; procedencia: string; tareas: TareaFuente[] }
-  | { tipo: 'evaluar'; planId: string; tareaId: string; resultado: 'Aceptada' | 'Rechazada'; motivo: string }
-  | { tipo: 'finalizar'; planId: string }
+  | { tipo: 'evaluar'; planId: string; tareaId: string; resultado: 'Aceptada' | 'Rechazada'; motivo: string; version?: number; tiempoAceptado?: string; trabajadoresAceptados?: string }
+  | { tipo: 'finalizar'; planId: string; version?: number }
+  | { tipo: 'guardarRevision'; planId: string; version: number; decisiones: DecisionPCM[] }
+  | { tipo: 'confirmarPCM'; planId: string; version: number; reconocerConflictos: boolean }
+  | { tipo: 'cancelarPCM'; planId: string; version: number; motivo: string; confirmada: boolean }
