@@ -1,6 +1,6 @@
 # Sistema de ETA — especificación definitiva
 
-Decisión funcional del propietario del **17/11/2026**. Este contrato reemplaza toda indicación anterior que deje pendiente la definición de ETA Predictiva o la relación entre las tres ETA. Es una especificación aprobada, **todavía no implementada**: no autoriza desarrollar lógica, cambiar tipos, servicios, componentes ni datos durante la Fase 1 de diseño. La implementación requiere autorización expresa posterior.
+Decisión funcional del **17/11/2026**, implementada en Validación Taller tras la autorización del **23/11/2026**. Asignaciones, turnos y calendario quedan pendientes de sus módulos.
 
 ## Tres campos independientes
 
@@ -58,20 +58,20 @@ Las modificaciones posteriores de la Predictiva no cambian la Final que ya fue c
 
 La Final sigue siendo editable por PCM y Taller **según sus permisos**, sin conceder acceso a todos los perfiles de Taller. La documentación de [Validación Taller](VALIDACION_TALLER.md) describe los permisos actualmente implementados. Esta decisión documental no amplía esos permisos ni cambia las restricciones de edición de planes confirmados o cancelados.
 
-Guardar una predicción y confirmar su aplicación operativa son acciones distintas. La segunda exige autorización explícita; no se debe deducir ese permiso de poder consultar un plan, editar una predicción, evaluar tareas o asignar personal. La matriz concreta de autorización para las acciones nuevas deberá quedar acordada al autorizar su desarrollo; esta especificación no asigna usuarios ni roles adicionales. En demo, los roles simulados deben seguir identificados como tales, sin presentarlos como seguridad real.
+Guardar una predicción y confirmar su aplicación operativa son acciones distintas. La segunda exige autorización explícita; no se debe deducir ese permiso de poder consultar un plan, editar una predicción, evaluar tareas o asignar personal. Planificador, Administrador y Supervisor Taller pueden guardar y confirmar una predicción en planes abiertos. Taller y Consulta pueden verla. En demo, los roles simulados deben seguir identificados como tales, sin presentarlos como seguridad real.
 
-## Integración y compatibilidad — desarrollo pendiente de autorización
+## Integración y compatibilidad
 
-- **Tipos compartidos:** extender el contrato de `src/types/pcm.ts` cuando se autorice, representando la predicción y su trazabilidad de forma independiente. Actualmente `Plan.eta` representa la Final; esta especificación no renombra ni modifica el campo implementado.
-- **Dominio compartido:** integrar el guardado de predicciones y su confirmación en las operaciones y validaciones de ETA existentes. Reutilizar el recorrido de actualización de la Final para auditoría, ventana operativa y conflictos, sin copiar esa lógica entre Planificación, Taller, Revisión PCM y calendarios.
+- **Tipos compartidos:** `Plan.eta` sigue representando la Final. `etaPredictiva` e `historialPredictiva` son opcionales para que los planes anteriores sigan siendo legibles.
+- **Dominio compartido:** `guardarPredictiva` registra la predicción. `confirmarPredictiva` usa el mismo circuito que `cambiarEta`, con control de versión, auditoría y alertas.
 - **Servicios y persistencia:** conservar el almacenamiento actual, TAG, identificadores, contador, planes, OM, evaluaciones, resoluciones, asignaciones e historiales. Cualquier ampliación futura debe ser compatible y no destructiva; no crear una base externa para esta funcionalidad.
 - **Datos anteriores:** una predicción ausente permanece sin dato hasta que se registre; no inventarla a partir de la Inicial o Final. Conservar la procedencia de las ETA iniciales históricas heredadas o sin dato; no afirmar que se conoce su valor original de creación.
-- **Componentes compartidos:** adaptar el editor de ETA existente para presentar los tres campos y la comparación previa a confirmar. Usar los tokens de [Graphite Maritime](DISEÑO_GRAPHITE.md), mantener accesibilidad, confirmación explícita, validaciones y estados de guardado claramente diferenciados.
+- **Componentes compartidos:** Validación Taller muestra las tres fechas y abre la comparación y la confirmación en Gestionar ETA.
 - **Módulos relacionados:** conectar disponibilidad, compromisos, asignaciones y calendarios a la misma ETA Final vigente. Actualmente existen advertencias de ventanas y duración, pero todavía no hay asignaciones nominales, turnos, capacidad real ni calendarios implementados. La integración futura debe revisar datos reales de esos módulos cuando existan, sin inventar técnicos, horarios o compromisos para simular el resultado.
 
 No modificar el Archivo local histórico ni convertir sus planes de forma implícita. Las limitaciones actuales de persistencia y seguridad permanecen documentadas en [Arquitectura](ARQUITECTURA.md).
 
-## Criterios de aceptación para la futura implementación
+## Criterios de aceptación
 
 1. Crear un plan conserva Inicial y Final iguales; la Inicial permanece inmutable ante todas las operaciones posteriores.
 2. Guardar y volver a editar una predicción conserva la Final, su ventana operativa y las aprobaciones de Taller. Tras recargar, la predicción y su historial se mantienen y se reconoce que todavía no se aplicó a la operación.
@@ -81,4 +81,4 @@ No modificar el Archivo local histórico ni convertir sus planes de forma implí
 6. Un conflicto mantiene las aceptaciones, identifica trabajos y trabajadores existentes, persiste al cerrar el aviso o recargar y permite operar sobre lo no bloqueado.
 7. Los registros anteriores sin predicción siguen siendo legibles; no se pierden TAG, evaluaciones, asignaciones ni historia.
 
-Estos criterios son requisitos para pruebas futuras; **no describen pruebas ejecutadas ni funcionalidad disponible actualmente**. La Fase 1 de diseño y esta actualización documental no habilitan implementar la lógica de ETA ni continuar a otra fase.
+Los criterios sobre calendario y asignación aplican cuando existan esos módulos. La revisión actual calcula compromisos por especialidad y revisa solapamientos de ventanas sin asignar técnicos.

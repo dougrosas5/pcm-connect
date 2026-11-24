@@ -95,7 +95,7 @@ test('v1.3: borrador incompleto, TAG permanente, recarga y envío idempotente', 
   assert.equal(r.planes[0].estado, 'Enviado a Taller')
   assert.equal(r.planes[0].filas[0].tiempoOriginal, 3)
   assert.equal(r.historial.at(-1)?.anterior && typeof r.historial.at(-1)?.anterior, 'object')
-  assert.throws(() => aplicar(r, { ...comando, enviar: false }), /ya fue enviada/u)
+  assert.throws(() => aplicar(r, { ...comando, enviar: false }), /Reabrí la versión vigente/u)
 })
 test('v1.3: valida envío pero permite borrador incompleto y advertencia individual no bloqueante', () => {
   const r = base()
@@ -111,7 +111,7 @@ test('v1.3: valida envío pero permite borrador incompleto y advertencia individ
   for (const trabajadores of ['0', '1.5', '-2', '1e2'])
     assert.ok(
       erroresEnvio({ ...p, filas: [{ ...p.filas[0], trabajadores }] }, r).some((e) =>
-        e.includes('entero positivo')
+        e.includes('cantidad entera de trabajadores, como mínimo 1')
       )
     )
 })
@@ -228,7 +228,7 @@ test('v1.3: CSV conserva ceros, comillas y saltos; deduplica idénticas y rechaz
   assert.equal(resultado.avisos.length, 1)
   const filas = leerCSV(csv)
   filas[2][3] = '999'
-  assert.throws(() => convertirFilas(filas), /contradictorios/u)
+  assert.throws(() => convertirFilas(filas), /OM-001 tiene valores o estados distintos/u)
   filas[2][0] = 'OTRA-TAREA'
   assert.throws(() => convertirFilas(filas), /vinculada a más de una tarea/u)
   assert.throws(() => convertirFilas([['TAREA']]), /Faltan columnas/u)

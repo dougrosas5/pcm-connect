@@ -38,6 +38,7 @@ dist-ssr
 
 # Informes, respaldos y continuidad local de agentes; nunca publicar.
 /.codex-outputs/
+/design-reference/
 *.tmp
 *.temp
 *.tsbuildinfo

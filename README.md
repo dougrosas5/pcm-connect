@@ -8,7 +8,7 @@ La versión nueva permite preparar tareas/PM con OM de «Valor aprobado», impor
 
 Sin configuración funciona como demo local explícita. Incluye una API para Vercel y migraciones Supabase para autenticación y persistencia multiusuario, que deben habilitarse con la infraestructura autorizada. No se incluyen credenciales. Consultar [configuración de servidor](docs/MODULO_1_V13.md), [Validación Taller y ETA](docs/VALIDACION_TALLER.md) y [arquitectura](docs/ARQUITECTURA.md).
 
-El [sistema definitivo de ETA](docs/ETA.md), especificado el 17/11/2026, distingue Inicial inmutable, Final operativa y Predictiva manual con confirmación explícita auditada. La Predictiva y su confirmación **todavía no están implementadas**; su desarrollo espera autorización y no pertenece a la Fase 1 de diseño.
+El [sistema definitivo de ETA](docs/ETA.md), especificado el 17/11/2026, distingue Inicial inmutable, Final operativa y Predictiva manual con confirmación explícita auditada. La predicción y su confirmación están en Validación Taller.
 
 ## Funciones de la demo histórica (Archivo local)
 

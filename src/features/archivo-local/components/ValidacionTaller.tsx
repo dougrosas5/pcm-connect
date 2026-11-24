@@ -29,7 +29,7 @@ function EvaluacionOM({ plan, om, actor, guardar }: { plan: Planificacion; om: s
   const editable = permisos(actor).evaluar && plan.estado === 'Pendiente de Taller' && !revision.congelada && !revision.cancelada
   return <>
     <td><span className="estado">{revision.cancelada ? 'Cancelada' : revision.resultado}</span>
-      <small className="detalle-om">Revisión {revision.revision} · {revision.congelada ? 'Aprobada / solo lectura' : revision.evaluada !== undefined && revision.evaluada !== revision.revision ? 'Reevaluación requerida' : editable ? 'Editable por Taller' : 'Sin edición en este rol o etapa'}</small>
+      <small className="detalle-om">Revisión {revision.revision} · {revision.congelada ? 'Aprobada / solo lectura' : revision.evaluada !== undefined && revision.evaluada !== revision.revision ? 'Reevaluación requerida' : editable ? 'Editable por Taller' : 'Solo consulta'}</small>
       {editable && <select aria-label={`Evaluación de ${om}`} value={resultado} onChange={event => setResultado(event.target.value as ResultadoOM)}>
         {(['Pendiente', 'Viable', 'No viable'] as const).map(valor => <option key={valor}>{valor}</option>)}
       </select>}
@@ -51,7 +51,7 @@ function CorreccionOM({ plan, om, actor, guardar, cerrar }: { plan: Planificacio
     if (guardar(actual => corregirOM(actual, plan.codigo, om, datos, motivo, revision, actor))) cerrar()
   }}>
     <h2>Corregir {om} · revisión {revision}</h2>
-    <p className="ayuda">Solo cambia esta OM. Guardar exige una nueva evaluación y conserva el resultado anterior en el historial. La duración común de tarea permanece en Preparación.</p>
+    <p className="ayuda">La corrección afecta esta OM y requiere reevaluación. El resultado anterior queda en el historial.</p>
     <label>Descripción del trabajo<input required value={datos.descripcion} onChange={event => setDatos({ ...datos, descripcion: event.target.value })} /></label>
     <div className="campos-correccion">
       <label>Duración prevista de esta OM (h)<input required type="number" min="0" step="any" value={datos.duracionPrevista} onChange={event => setDatos({ ...datos, duracionPrevista: event.target.value })} /></label>
@@ -86,7 +86,7 @@ export default function ValidacionTaller({ registro, actor, guardar, bloqueado }
   const [seleccion, setSeleccion] = useState('')
   const [corrigiendo, setCorrigiendo] = useState<string | null>(null)
   const plan = recibidas.find(item => item.codigo === seleccion) ?? recibidas[0]
-  if (!plan) return <div className="estado-vacio">No hay planificaciones recibidas. PCM debe crear una planificación, completar sus tareas y usar «Enviar a Taller» en Planificación.</div>
+  if (!plan) return <div className="estado-vacio">No hay planificaciones recibidas. PCM debe enviar una planificación a Taller.</div>
   const filas = plan.preparacion.filas
   const activas = filas.filter(fila => !revisionDe(plan, fila.numero).cancelada)
   const pendientes = activas.filter(fila => revisionDe(plan, fila.numero).resultado === 'Pendiente').length
@@ -107,7 +107,7 @@ export default function ValidacionTaller({ registro, actor, guardar, bloqueado }
       </dl>
     </section>
     <p className="resumen-validacion" role="status"><strong>{pendientes}</strong> pendientes · <strong>{viables}</strong> viables · <strong>{rechazadas}</strong> no viables · {filas.length - activas.length} canceladas</p>
-    <p className="ayuda">Cada OM se evalúa por separado. Hasta finalizar, PCM puede editar trabajos no congelados; cada cambio invalida únicamente las evaluaciones afectadas. Los valores comunes provienen de la tarea salvo corrección individual indicada.</p>
+    <p className="ayuda">La evaluación se registra por OM. Si PCM corrige una OM antes de finalizar, esa OM requiere reevaluación.</p>
     <fieldset disabled={bloqueado} className="area-tareas">
       <div className="tabla-contenedor" role="region" aria-label="Evaluación individual de OM; desplazamiento horizontal" tabIndex={0}>
         <table className="tabla-tareas tabla-validacion">
@@ -121,7 +121,7 @@ export default function ValidacionTaller({ registro, actor, guardar, bloqueado }
               <td>{datos.duracionPrevista} h · {datos.personas} personas<span className="detalle-om">{datos.responsable || 'Sin responsable'}</span><span className="detalle-om">{datos.costo === undefined ? 'Costo sin definir' : `Gs. ${datos.costo.toLocaleString('es-PY')}`}</span><small>{revision.datos ? 'Datos individuales de OM' : 'Valores comunes de tarea'}</small></td>
               <EvaluacionOM key={`${plan.codigo}-${revision.revision}-${revision.resultado}-${revision.motivo}-${actor.rol}`} plan={plan} om={fila.numero} actor={actor} guardar={guardar} />
               <td>{puedeCorregir(plan, fila.numero, actor) ? <button type="button" className="boton-secundario" onClick={() => setCorrigiendo(fila.numero)}>Corregir {fila.numero}</button> : 'Solo lectura'}
-                {revision.congelada && <><button type="button" className="boton-secundario" disabled>Cancelar {fila.numero}</button><small className="detalle-om">Cancelación restringida: permisos pendientes.</small></>}
+                {revision.congelada && <><button type="button" className="boton-secundario" disabled>Cancelar {fila.numero}</button><small className="detalle-om">La cancelación de OM aceptadas no está habilitada.</small></>}
               </td>
             </tr>
           })}</tbody>
@@ -132,10 +132,10 @@ export default function ValidacionTaller({ registro, actor, guardar, bloqueado }
       {plan.estado === 'Pendiente de PCM' && permisos(actor).organizar && <DecisionPCM key={plan.codigo} plan={plan} actor={actor} guardar={guardar} />}
     </fieldset>
     {plan.estado === 'En revisión' && <p className="ayuda">PCM o Taller pueden corregir las OM no congeladas. Luego PCM debe reenviar desde Planificación.</p>}
-    {plan.estado === 'Confirmada' && <p className="aviso-guardado">Confirmada · elegibles para futura asignación: {ordenesAsignables(plan).map(fila => fila.numero).join(', ')}. Las rechazadas quedan excluidas. La asignación aún no está implementada.</p>}
+    {plan.estado === 'Confirmada' && <p className="aviso-guardado">OM viables para asignación: {ordenesAsignables(plan).map(fila => fila.numero).join(', ')}. La asignación aún no está habilitada.</p>}
     {plan.estado === 'Cancelada' && <p className="aviso-guardado">Planificación cancelada. No permite nuevas evaluaciones, cambios ni asignaciones.</p>}
     <details className="historial-taller"><summary>Decisiones e historial · {historial.length} eventos</summary>
-      <p className="ayuda">Fechas y horas de Montevideo. Se conservan resultados y datos de cada revisión.</p>
+      <p className="ayuda">Se conservan los resultados y datos de cada revisión.</p>
       {historial.length === 0 && <p>No hay eventos disponibles para este registro anterior.</p>}
       <ol>{[...historial].reverse().map((evento, indice) => <li key={`${evento.fecha}-${indice}`}>
         <strong>{evento.tipo}</strong> · {evento.planificacion}{evento.om && ` · ${evento.om}`}{evento.revision && ` · revisión ${evento.revision}`}

@@ -1,0 +1,228 @@
+/* Shell naval y Planificación: composición de referencia con densidad operativa. */
+[hidden] { display: none !important; }
+.saltar-contenido { z-index: 50; }
+.icono { width: 20px; height: 20px; flex: 0 0 auto; vertical-align: middle; }
+button .icono { margin-right: 6px; }
+.app { display: grid; grid-template-columns: var(--ancho-sidebar) minmax(0, 1fr); grid-template-rows: 50px 1fr; align-items: start; position: relative; }
+.topbar { grid-column: 1 / -1; grid-row: 1; height: 50px; display: flex; align-items: center; gap: 24px; background: var(--naval-topbar); color: white; padding: 0 20px; position: sticky; top: 0; z-index: 20; }
+.topbar-marca { display: flex; gap: 10px; align-items: center; white-space: nowrap; }
+.topbar-marca > .icono { width: 30px; height: 28px; }
+.topbar-marca strong { font-size: 19px; letter-spacing: .2px; }
+.topbar-titulo { border-left: 1px solid #54718d; padding-left: 24px; font-size: 14px; color: #e1eaf2; white-space: nowrap; }
+.topbar-ayuda { margin-left: auto; margin-right: 215px; position: relative; }
+.topbar-ayuda summary { list-style: none; cursor: pointer; padding: 8px; }
+.topbar-ayuda summary::-webkit-details-marker { display: none; }
+.topbar-ayuda > div { position: absolute; right: 0; top: 40px; padding: 18px; background: white; color: var(--grafito); width: 320px; border: 1px solid var(--borde); border-radius: 6px; box-shadow: var(--naval-sombra); font-size: 14px; }
+.sidebar { grid-column: 1; grid-row: 2; top: 50px; width: var(--ancho-sidebar); height: calc(100dvh - 50px); background: var(--naval-sidebar); padding: 18px 8px 12px; border-radius: 0; }
+.menu { gap: 2px; }
+.menu button { display: flex; align-items: center; padding: 10px; min-height: 40px; font-size: 13px; border: 0; gap: 6px; border-radius: 4px; }
+.menu button .icono { width: 20px; height: 20px; margin: 0 6px 0 0; }
+.menu button:hover:enabled { background: var(--color-sidebar-hover); }
+.menu .menu-activo, .menu .menu-activo:hover { background: var(--naval-primary); color: white; }
+.sidebar-footer { font-size: 11px; line-height: 1.5; padding-inline: 10px; color: #bacbdc; }
+.contenido { grid-column: 2; grid-row: 2; min-width: 0; padding: 18px 20px 28px; }
+.page-header { display: flex; align-items: center; min-height: 32px; margin: 0 0 16px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.page-header h1 { margin: 0; color: var(--grafito); font-size: 24px; font-weight: 600; letter-spacing: -.3px; line-height: 1.25; }
+.sesion-naval { position: fixed; top: 2px; right: 12px; z-index: 30; margin: 0; padding: 0; border: 0; background: transparent; border-radius: 0 0 6px 6px; width: 210px; display: block; color: white; font-size: 13px; }
+.sesion-naval summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; min-height: 44px; list-style: none; }
+.sesion-naval summary > .icono:last-child { width: 14px; margin-left: auto; }
+.sesion-naval summary::-webkit-details-marker { display: none; }
+.sesion-naval summary small { color: #d4e5f9; }
+.sesion-naval[open] { width: 350px; background: white; color: var(--grafito); border: 1px solid var(--borde); box-shadow: var(--naval-sombra); }
+.sesion-naval[open] > summary { background: var(--naval-topbar); color: white; }
+.sesion-naval > strong, .sesion-naval > p, .sesion-naval > label, .sesion-naval > small { margin: 12px 16px; }
+.sesion-naval > strong { display: block; }
+.sesion-naval > p { font-size: 13px; line-height: 1.5; }
+.sesion-naval > label { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sesion-naval > small { display: block; }
+.boton-primario { background: var(--naval-primary); border-color: var(--naval-primary); }
+.boton-primario:hover:enabled { background: var(--color-accion-hover); }
+.boton-secundario { border-color: var(--color-borde-control); color: var(--color-azul-acero); }
+.planificacion-visual { font-size: 13px; }
+.planificacion-visual button { min-height: 34px; font-size: 13px; padding: 5px 12px; border-radius: var(--radio-control); }
+.cabecera-naval { padding: 0; margin: 0 0 18px; border-radius: var(--radio-panel); overflow: visible; box-shadow: none; }
+.cabecera-naval-titulo, .propuesta-naval-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 46px; padding: 8px 16px; border-bottom: 1px solid var(--borde); border-radius: var(--radio-panel) var(--radio-panel) 0 0; background: var(--color-superficie-hover); }
+.cabecera-naval-titulo h2, .m1 .propuesta-naval-titulo h2 { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 16px; font-weight: 600; color: var(--naval-titulo); }
+.cabecera-naval-titulo h2 > .icono, .propuesta-naval-titulo h2 > .icono { width: 19px; height: 19px; color: var(--color-azul-acero); }
+.actualizacion-plan { font-size: 11px; font-weight: 400; color: var(--texto-secundario); }
+.cabecera-naval .estado { border-radius: var(--radio-control); }
+.cabecera-naval .selector-planificaciones { margin: 0 0 0 auto; gap: 6px; align-items: center; }
+.cabecera-naval .consulta-planificaciones { font-size: 0; gap: 0; width: 205px; }
+.cabecera-naval .selector-planificaciones select { min-height: 30px; padding: 4px 6px; font-size: 12px; }
+.cabecera-naval .selector-planificaciones button { min-height: 30px; font-size: 12px; padding: 4px 9px; }
+.cabecera-naval-cuerpo { padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; }
+.campos-naval { display: grid; grid-template-columns: 1.15fr 1fr 1.15fr; gap: 12px 16px; align-content: start; }
+.campos-naval .m1-campo { font-size: 12px; gap: 5px; color: var(--grafito); }
+.campos-naval .m1-campo > label { font: inherit; }
+.campos-naval .m1-campo > small { font-weight: 400; line-height: 1.4; margin: 0; }
+.planificacion-visual .enlace-catalogo { align-self: flex-start; min-height: 26px; padding: 2px 0; border: 0; background: transparent; color: var(--color-azul-acero); text-decoration: underline; font-size: 12px; text-align: left; }
+.campos-naval input, .campos-naval select { font-size: 13px; min-height: 34px; height: 34px; padding: 5px 8px; }
+.resumen-remolcador { border-left: 1px solid var(--borde); padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 14px; }
+.tarjeta-remolcador { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 2px 8px; color: var(--naval-titulo); }
+.tarjeta-remolcador .icono { width: 25px; height: 24px; grid-row: span 2; color: var(--color-azul-acero); }
+.tarjeta-remolcador strong { font-size: 16px; line-height: 1.3; max-width: 100%; overflow-wrap: anywhere; }
+.tarjeta-remolcador span { color: var(--texto-secundario); font-size: 12px; }
+.resumen-remolcador dl { margin: 0; display: grid; gap: 7px; font-size: 12px; }
+.resumen-remolcador dl > div { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 5px; }
+.resumen-remolcador dt { font-weight: 400; color: var(--texto-secundario); }
+.resumen-remolcador dd { margin: 0; font-variant-numeric: tabular-nums; }
+.resumen-remolcador dl .icono { display: none; }
+.metadatos-plan { padding: 0; position: relative; }
+.metadatos-plan summary { display: inline-flex; align-items: center; min-height: 28px; font-size: 11px; color: #385578; padding: 2px; cursor: pointer; list-style: none; }
+.metadatos-plan summary::-webkit-details-marker { display: none; }
+.metadatos-plan > div { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 16px; position: absolute; top: 32px; left: 0; width: 510px; max-width: calc(100vw - 240px); background: white; border: 1px solid var(--borde); box-shadow: var(--naval-sombra); border-radius: 6px; z-index: 12; }
+.metadatos-plan .m1-campo { min-width: 150px; }
+.metadatos-plan .ayuda { margin: 0; font-size: 12px; }
+.propuesta-naval { border: 1px solid var(--borde); border-radius: var(--radio-panel); background: white; }
+.propuesta-naval-titulo { position: relative; gap: 12px; }
+.estado-propuesta { margin: 0; font-size: 12px; }
+.estado-propuesta:not(:empty) { position: static; }
+.importador-compacto { display: flex; align-items: center; gap: 10px; margin-left: auto; position: relative; font-size: 11px; }
+.importador-compacto .m1-encabezado { margin: 0; gap: 10px; }
+.importador-compacto .m1-encabezado > div { display: flex; align-items: center; gap: 10px; }
+.importador-compacto .ayuda { font-size: 11px; margin: 0; }
+.importador-compacto .m1-encabezado .ayuda { max-width: 260px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.fuente-excel { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: 11px; }
+.fuente-excel > span { background: #16813b; border-radius: 2px; color: white; font-size: 14px; padding: 2px 5px; }
+.importador-compacto > details { border: 0; margin: 0; }
+.importador-compacto > details > summary { display: inline-flex; gap: 6px; align-items: center; border: 1px solid var(--color-borde-control); background: white; color: var(--color-azul-acero); border-radius: var(--radio-control); padding: 4px 8px; min-height: 32px; font-size: 12px; font-weight: 600; list-style: none; cursor: pointer; }
+.importador-compacto > details > summary::-webkit-details-marker { display: none; }
+.importador-compacto > details[open] { position: absolute; top: -6px; right: 0; width: min(700px, calc(100vw - 200px)); z-index: 10; padding: 12px; background: white; color: var(--grafito); border: 1px solid var(--borde); border-radius: 8px; box-shadow: 0 6px 18px #113d6a33; }
+.importador-compacto > details[open] > .ayuda { margin-block: 10px; white-space: normal; line-height: 1.5; }
+.importador-compacto > details[open] summary { margin-bottom: 8px; }
+.importador-compacto .m1-lista-historial { max-height: 250px; }
+.importador-compacto .m1-preview { margin-block: 12px; padding: 12px; }
+.importador-compacto .m1-preview h3 { font-size: 14px; }
+.planificacion-visual .entrada-busqueda { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 16px; border: 0; background: transparent; }
+.entrada-busqueda label { font-size: 13px; white-space: nowrap; }
+.campo-busqueda-naval { position: relative; width: 320px; max-width: 100%; }
+.campo-busqueda-naval > .icono { position: absolute; top: 7px; left: 10px; color: #234977; }
+.planificacion-visual .entrada-busqueda textarea { min-height: 34px; height: 34px; padding: 8px 10px 6px 34px; font-size: 12px; line-height: 16px; resize: vertical; }
+.planificacion-visual .tabla-contenedor { position: relative; border-radius: 4px; margin: 0 16px; max-width: calc(100% - 32px); }
+.planificacion-visual .m1-tabla { min-width: 1080px; table-layout: fixed; font-size: 12px; }
+.planificacion-visual .m1-tabla caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; }
+.planificacion-visual .m1-tabla thead th { background: var(--color-superficie-suave); color: var(--grafito); font-size: 12px; padding: 9px 8px; font-weight: 600; border-right: 1px solid var(--borde); }
+.planificacion-visual .m1-tabla td, .planificacion-visual .m1-tabla tbody th { padding: 8px; border-right: 1px solid var(--color-superficie-suave); vertical-align: middle; }
+.planificacion-visual .m1-tabla th:nth-child(1) { width: 10%; }
+.planificacion-visual .m1-tabla th:nth-child(2) { width: 12%; }
+.planificacion-visual .m1-tabla th:nth-child(3) { width: 10%; }
+.planificacion-visual .m1-tabla th:nth-child(4) { width: 19%; }
+.planificacion-visual .m1-tabla th:nth-child(5), .planificacion-visual .m1-tabla th:nth-child(6) { width: 7%; }
+.planificacion-visual .m1-tabla th:nth-child(7) { width: 7%; }
+.planificacion-visual .m1-tabla th:nth-child(8) { width: 13%; }
+.planificacion-visual .m1-tabla th:nth-child(9) { width: 8%; }
+.planificacion-visual .m1-tabla th:nth-child(10) { width: 7%; }
+.planificacion-visual .m1-tabla td:nth-child(n) { min-width: 0; }
+.planificacion-visual .m1-tabla input, .planificacion-visual .m1-tabla select { font-size: 12px; min-height: 30px; height: 30px; padding: 3px 5px; border-radius: var(--radio-control); }
+.planificacion-visual .m1-tabla .descripcion-trabajo { min-width: 0; max-width: none; line-height: 1.3; }
+.planificacion-visual .m1-oms { min-width: 0; display: flex; flex-wrap: wrap; gap: 2px; font-size: 11px; }
+.planificacion-visual .m1-oms li:not(:last-child)::after { content: ','; }
+.planificacion-visual .m1-original { font-size: 10px; line-height: 1.2; margin-top: 2px; }
+.planificacion-visual .m1-tabla td:nth-child(5) > .m1-original { display: none; }
+.planificacion-visual .m1-acciones-fila { gap: 0; flex-wrap: nowrap; }
+.planificacion-visual .m1-acciones-fila button { padding: 4px; min-width: 24px; min-height: 28px; border: 0; background: transparent; }
+.planificacion-visual .m1-acciones-fila button .icono { width: 16px; height: 16px; margin: 0; }
+.planificacion-visual .m1-acciones-fila button:last-child { color: #b92d36; }
+.planificacion-visual .texto-accion-fila { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.criticidad { display: inline-block; text-align: center; min-width: 54px; padding: 3px 7px; border-radius: 3px; background: var(--color-superficie-suave); font-size: 11px; font-weight: 600; }
+.criticidad[data-nivel='alta'] { color: var(--estado-rechazado-texto); background: var(--estado-rechazado-fondo); }
+.criticidad[data-nivel='media'] { color: var(--estado-pendiente-texto); background: var(--estado-pendiente-fondo); }
+.criticidad[data-nivel='baja'] { color: var(--estado-aceptado-texto); background: var(--estado-aceptado-fondo); }
+.planificacion-visual .estado { border: 0; background: var(--naval-celeste); color: var(--color-azul-acero); font-size: 11px; padding: 4px 7px; }
+.planificacion-visual .cabecera-naval .estado { color: var(--estado-bloqueado-texto); background: var(--estado-bloqueado-fondo); padding: 4px 8px; }
+.planificacion-visual .m1-pie-acciones { margin: 0; padding: 16px; display: flex; flex-wrap: nowrap; gap: 24px; }
+.nota-planificacion { flex: 1; display: flex; align-items: flex-start; gap: 8px; margin: 0; max-width: 63ch; font-size: 12px; color: var(--texto-secundario); line-height: 1.5; }
+.nota-planificacion > .icono { color: var(--texto-secundario); width: 17px; height: 17px; }
+.acciones-envio-naval { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.acciones-envio-naval > button { min-width: 70px; }
+.acciones-envio-naval button { white-space: nowrap; }
+.espacio-plan-naval > .historial-taller { margin-top: 20px; border-color: var(--borde); border-radius: var(--radio-control); background: var(--superficie); font-size: 12px; }
+.espacio-plan-naval > [role='status']:not(:empty) { padding: 8px 12px; background: #edf7ff; border: 1px solid #a8c8ed; margin-bottom: 8px; border-radius: 5px; }
+.planificacion-visual .m1-nota, .planificacion-visual .estado-vacio { margin: 10px 14px; }
+.planificacion-visual .estado-vacio { border: 0; background: var(--color-superficie-hover); padding: 28px 20px; }
+@media (max-width: 1400px) {
+
+  .cabecera-naval-cuerpo { gap: 18px; padding-inline: 18px; grid-template-columns: minmax(0, 1fr) 260px; }
+  .campos-naval { gap: 10px 14px; }
+  .actualizacion-plan { display: none; }
+  .importador-compacto .m1-encabezado .ayuda { max-width: 145px; }
+  .planificacion-visual .m1-pie-acciones { gap: 14px; }
+  .planificacion-visual .m1-tabla th:nth-child(2) { width: 11%; }
+  .planificacion-visual .m1-tabla th:nth-child(4) { width: 18%; }
+  .planificacion-visual .m1-tabla th:nth-child(6) { width: 9%; }
+}
+@media (max-width: 1100px) {
+  .topbar-titulo { font-size: 13px; }
+
+  .topbar { padding-inline: 16px; gap: 16px; }
+  .topbar-marca { gap: 12px; }
+  .topbar-titulo { padding-left: 16px; }
+  .cabecera-naval-cuerpo { grid-template-columns: 1fr; }
+  .resumen-remolcador { flex-direction: row; border-left: 0; border-top: 1px solid var(--borde); padding: 12px 0 0; justify-content: space-between; }
+  .resumen-remolcador dl { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+
+  .tarjeta-remolcador strong { font-size: 17px; }
+  .propuesta-naval-titulo { align-items: flex-start; }
+  .importador-compacto { flex-wrap: wrap; }
+  .importador-compacto .m1-encabezado .ayuda { max-width: 210px; }
+  .planificacion-visual .m1-pie-acciones { flex-wrap: wrap; }
+  .nota-planificacion { flex-basis: 100%; }
+  .acciones-envio-naval { margin-left: auto; }
+}
+@media (max-width: 760px) {
+  .app { display: flex; flex-direction: column; }
+  .topbar { width: 100%; height: 50px; flex-shrink: 0; padding: 0 12px; }
+  .topbar-marca strong { font-size: 17px; }
+  .topbar-marca > .icono { width: 30px; }
+  .topbar-titulo, .topbar-ayuda { display: none; }
+  .sesion-naval { right: 4px; width: 145px; font-size: 11px; }
+  .sesion-naval summary { padding-inline: 6px; gap: 5px; }
+  .sesion-naval summary small { display: none; }
+  .sesion-naval[open] { width: min(350px, calc(100% - 8px)); }
+  .sidebar { width: 100%; height: auto; position: static; border-radius: 0; padding: 5px; }
+  .menu { display: flex; flex-direction: row; flex-wrap: wrap; gap: 3px; }
+  .menu button { flex: 1 0 auto; padding: 6px 8px; min-height: 44px; font-size: 12px; }
+  .menu button .icono { width: 16px; margin-right: 0; }
+  .contenido { width: 100%; padding: 8px; }
+  .page-header { min-height: 36px; margin: 4px 0 12px; }
+  .page-header h1 { font-size: 22px; }
+  .cabecera-naval-titulo, .propuesta-naval-titulo { padding: 8px 12px; gap: 8px; }
+  .cabecera-naval-titulo h2, .m1 .propuesta-naval-titulo h2 { font-size: 16px; }
+  .cabecera-naval .selector-planificaciones { order: 4; flex-basis: 100%; }
+  .cabecera-naval .consulta-planificaciones { flex: 1; }
+  .cabecera-naval-cuerpo { padding: 12px; }
+  .campos-naval { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .campos-naval input, .campos-naval select, .planificacion-visual button, .cabecera-naval .selector-planificaciones button, .cabecera-naval .selector-planificaciones select { min-height: 44px; height: auto; }
+  .planificacion-visual .enlace-catalogo { min-height: 44px; }
+  .resumen-remolcador { flex-direction: column; }
+  .resumen-remolcador dl { flex-direction: column; align-items: flex-start; padding: 6px; }
+  .tarjeta-remolcador { justify-content: flex-start; }
+  .metadatos-plan summary { min-height: 44px; padding-block: 12px; }
+  .metadatos-plan > div { position: fixed; top: 150px; left: 12px; right: 12px; width: auto; max-width: none; max-height: calc(100dvh - 180px); overflow-y: auto; flex-wrap: wrap; gap: 10px; }
+  .importador-compacto { margin: 0; width: 100%; }
+  .importador-compacto .m1-encabezado > div { flex-wrap: wrap; }
+  .importador-compacto > details[open] { width: calc(100vw - 58px); top: 0; right: 0; }
+  .importador-compacto .m1-encabezado .ayuda { max-width: 270px; }
+  .estado-propuesta:not(:empty) { position: static; }
+  .planificacion-visual .entrada-busqueda { flex-wrap: wrap; padding: 12px; gap: 8px; }
+  .campo-busqueda-naval { width: 100%; }
+  .planificacion-visual .entrada-busqueda textarea { min-height: 50px; }
+  .planificacion-visual .m1-tabla input, .planificacion-visual .m1-tabla select { min-height: 44px; }
+  .planificacion-visual .m1-acciones-fila button { min-width: 44px; min-height: 44px; }
+  .planificacion-visual .m1-tabla { min-width: 1450px; }
+  .planificacion-visual .m1-tabla td:nth-child(5) > .m1-original { display: block; }
+  .acciones-envio-naval { flex-wrap: wrap; width: 100%; }
+  .acciones-envio-naval > button { width: 100%; }
+  .acciones-envio-naval .m1-acciones { width: 100%; }
+  .acciones-envio-naval .m1-acciones button { flex: 1; }
+}
+@media (max-width: 420px) {
+  .campos-naval { grid-template-columns: 1fr; }
+  .topbar-marca { gap: 7px; }
+  .topbar-marca strong { font-size: 17px; padding-left: 7px; }
+  .topbar-marca > .icono { width: 26px; }
+}
+@media (max-width: 360px) {
+  .topbar-marca > .icono { display: none; }
+  .topbar-marca strong { padding-left: 0; border: 0; font-size: 16px; }
+}

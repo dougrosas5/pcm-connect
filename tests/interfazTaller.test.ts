@@ -48,7 +48,7 @@ test('React renderiza navegación, vacío, permisos, resumen, decisiones e histo
     Object.assign(globalThis, { window: { localStorage: { getItem: () => JSON.stringify(registro) } } })
     const app = renderToStaticMarkup(createElement(App))
     for (const pagina of ['Planificación', 'Tareas', 'Validación Taller', 'Personal']) assert.ok(app.includes(`>${pagina}</button>`), pagina)
-    assert.match(app, /Rol simulado \(demo\)/u)
+    assert.match(app, /Rol simulado/u)
     assert.match(app, /sin autenticación ni seguridad real/u)
   } finally {
     Reflect.deleteProperty(globalThis, 'window')

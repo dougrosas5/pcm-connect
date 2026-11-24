@@ -63,7 +63,7 @@ test('M2: cambio conserva identificadores, propuesta, costos, decisiones y estad
   assert.equal(despues.historial.at(-1)?.accion, 'cambiarEta')
   assert.deepEqual(aplicar(despues, c, supervisor, 'recibo-eta-ficticio'), despues)
   assert.throws(() => aplicar(despues, c), /cambió/u)
-  assert.throws(() => aplicar(despues, comando(nuevo)), /no cambió/u)
+  assert.throws(() => aplicar(despues, comando(nuevo)), /ETA final coincide con la vigente/u)
 })
 
 test('M2: permisos, fecha inválida y comentario vacío no modifican el registro', () => {
@@ -98,11 +98,13 @@ test('M2: registro antiguo conserva ETA disponible, ausencias y evaluaciones sin
 
 test('M2: filtros combinados, fechas inclusivas Montevideo, vacíos y progreso histórico sin inventar cierre', () => {
   const p = base().planes[0]
+  assert.deepEqual(filtrarPlanes([p], filtrosVacios, false), [], 'Los borradores de PCM quedan fuera de Taller')
+  p.estado = 'Enviado a Taller'
   p.remolcadorId = 'remolcador-ficticio'
   p.ubicacionId = 'ubicacion-ficticia'
   p.eta = nueva // 31/12 a las 23:30 en Montevideo.
   const filtros = { ...filtrosVacios, tag: ' pcm-000001 ', remolcador: p.remolcadorId,
-    ubicacion: p.ubicacionId, estado: 'Borrador', desde: '2026-12-31', hasta: '2026-12-31' }
+    ubicacion: p.ubicacionId, estado: 'Enviado a Taller', desde: '2026-12-31', hasta: '2026-12-31' }
   assert.equal(filtrarPlanes([p], filtros, false).length, 1)
   for (const datos of [{ tag: 'INEXISTENTE' }, { remolcador: 'otro' }, { ubicacion: 'otra' },
     { estado: 'Evaluado' }, { desde: '2027-01-01' }, { hasta: '2026-12-30' }])
@@ -110,5 +112,5 @@ test('M2: filtros combinados, fechas inclusivas Montevideo, vacíos y progreso h
   assert.equal(filtrarPlanes([{ ...p, eta: '' }], filtros, false).length, 0)
   assert.deepEqual(filtrarPlanes([], filtros, false), [])
   assert.deepEqual(filtrarPlanes([{ ...p, estado: 'Evaluado' }], filtrosVacios, true), [])
-  assert.equal(progresoAnterior(p), 'Sin enviar')
+  assert.equal(progresoAnterior(p), 'Solo ejecución externa')
 })

@@ -3,17 +3,21 @@ import { diferenciasFuente, mostrarFecha } from '../model/modelo'
 import type { Comando, Registro, TareaFuente } from '../../../types/pcm'
 import { descargarPlantilla, importarArchivo } from '../services/importacion'
 import { fuenteFicticia } from '../data/fuenteFicticia'
+import Icono from '../../../components/Icono'
+import HistorialImportaciones from './HistorialImportaciones'
 
 export default function Importador({
   registro,
   permitido,
   ocupado,
-  ejecutar
+  ejecutar,
+  compacto = false
 }: {
   registro: Registro
   permitido: boolean
   ocupado: boolean
   ejecutar: (c: Comando) => Promise<boolean>
+  compacto?: boolean
 }) {
   const [previa, setPrevia] = useState<{
     tareas: TareaFuente[]
@@ -24,29 +28,31 @@ export default function Importador({
   const [leyendo, setLeyendo] = useState(false)
   const ultima = registro.importaciones.at(-1)
   return (
-    <section className="m1-panel m1-importacion" aria-label="Fuente de tareas y PM">
+    <section className={compacto ? 'm1-importacion importador-compacto' : 'm1-panel m1-importacion'} aria-label="Fuente de tareas">
       <div className="m1-encabezado">
         <div>
-          <h2>Base de tareas y PM</h2>
+          {!compacto && <h2>Fuente de tareas</h2>}
+          {compacto && <strong className="fuente-excel"><span aria-hidden="true">X</span> Excel / CSV</strong>}
           <p className="ayuda">
             {ultima
               ? `Última importación: ${mostrarFecha(ultima.fecha)} · ${ultima.procedencia} · ${ultima.usuario}`
-              : 'Sin importaciones. Cargá una fuente para buscar tareas o PM.'}
+              : 'Sin importaciones. Importá un archivo para buscar tareas.'}
           </p>
         </div>
-        <button className="boton-secundario" onClick={descargarPlantilla}>
+        {!compacto && <button className="boton-secundario" onClick={descargarPlantilla}>
           Descargar plantilla CSV
-        </button>
+        </button>}
       </div>
       {permitido && (
         <details>
-          <summary>Actualizar desde Excel o CSV</summary>
+          <summary><Icono nombre="actualizar" />Importar archivo</summary>
           <p className="ayuda">
-            Primera hoja del .xlsx, hasta 20.000 filas y 10 MB. Una fila por OM; datos comunes iguales para
-            cada tarea. Identificadores como texto; números sin separadores de miles. La plantilla indica las
-            ocho columnas necesarias.
+            Usá la plantilla de ocho columnas. Cargá una fila por OM y repetí los datos comunes de cada TAREA/PM.
+            Indicá los códigos como texto y los números sin separadores de miles. Máximo 10 MB y 20.000 filas.
+            En Excel se lee la primera hoja.
           </p>
           <div className="m1-acciones">
+            {compacto && <button className="boton-secundario" onClick={descargarPlantilla}>Descargar plantilla CSV</button>}
             <label className="m1-campo">
               Archivo de origen
               <input
@@ -77,7 +83,7 @@ export default function Importador({
                 setError('')
                 setPrevia({
                   tareas: structuredClone(fuenteFicticia),
-                  avisos: ['Estos datos son completamente ficticios.'],
+                  avisos: ['Datos ficticios para pruebas.'],
                   procedencia: 'EJEMPLO FICTICIO · Sin datos operativos'
                 })
               }}
@@ -93,10 +99,9 @@ export default function Importador({
           )}
           {previa && (
             <div className="m1-preview">
-              <h3>Revisar importación · {previa.procedencia}</h3>
+              <h3>Vista previa · {previa.procedencia}</h3>
               <p>
-                {previa.tareas.length} tareas/PM. Las propuestas guardadas y enviadas conservan sus
-                instantáneas.
+                {previa.tareas.length} {previa.tareas.length === 1 ? 'tarea' : 'tareas'}. La importación no modifica las propuestas guardadas.
               </p>
               <ul>
                 {previa.avisos.map((a, i) => (
@@ -107,7 +112,7 @@ export default function Importador({
                 ))}
               </ul>
               {!diferenciasFuente(registro.fuente, previa.tareas).length && (
-                <p>Sin diferencias. Reimportar registra la procedencia y no duplica tareas ni OM.</p>
+                <p>Sin cambios en la fuente. Si confirmás, se registra la importación sin duplicar tareas ni OM.</p>
               )}
               <div className="m1-acciones">
                 <button
@@ -132,27 +137,10 @@ export default function Importador({
               </div>
             </div>
           )}
+          <HistorialImportaciones importaciones={registro.importaciones} />
         </details>
       )}
-      {!!registro.importaciones.length && (
-        <details>
-          <summary>Historial de importaciones ({registro.importaciones.length})</summary>
-          <ol className="m1-lista-historial">
-            {[...registro.importaciones].reverse().map((i) => (
-              <li key={i.id}>
-                <strong>{i.procedencia}</strong> · {mostrarFecha(i.fecha)} · {i.usuario}
-                <ul>
-                  {i.diferencias.length ? (
-                    i.diferencias.map((d, n) => <li key={n}>{d}</li>)
-                  ) : (
-                    <li>Sin diferencias respecto de la fuente anterior.</li>
-                  )}
-                </ul>
-              </li>
-            ))}
-          </ol>
-        </details>
-      )}
+      {!permitido && <HistorialImportaciones importaciones={registro.importaciones} />}
     </section>
   )
 }

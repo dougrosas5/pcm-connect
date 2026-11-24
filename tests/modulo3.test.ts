@@ -126,7 +126,7 @@ test('M3: ETA detecta solapamientos, reconoce advertencias y mantiene alertas y 
   assert.equal(r.planes[0].etaInicial, etaInicial)
   assert.equal(r.planes[0].historialEta?.[0].rol, 'Planificador')
   assert.deepEqual(r.planes[0].evaluaciones, evaluaciones)
-  assert.throws(() => confirmar(r), /Reconocé/u)
+  assert.throws(() => confirmar(r), /Marcá la casilla de conflictos/u)
   r = confirmar(r, true)
   assert.equal(r.planes[0].revisionPCM?.confirmacion?.conAdvertencias, true)
   assert.equal(conflictosPendientes(r.planes[0])[0].estado, 'Pendiente de reprogramación')

@@ -10,14 +10,16 @@ export default function Catalogos({
   catalogos,
   administrar,
   ocupado,
-  ejecutar
+  ejecutar,
+  tipoInicial = 'remolcadores'
 }: {
   catalogos: DatosCatalogos
   administrar: boolean
   ocupado: boolean
   ejecutar: (c: Comando) => Promise<boolean>
+  tipoInicial?: TipoCatalogo
 }) {
-  const [tipo, setTipo] = useState<TipoCatalogo>('remolcadores')
+  const [tipo, setTipo] = useState<TipoCatalogo>(tipoInicial)
   const [entrada, setEntrada] = useState<EntradaCatalogo>({
     id: '',
     nombre: '',
@@ -29,9 +31,9 @@ export default function Catalogos({
   }
   return (
     <section className="m1-panel" aria-labelledby="catalogos-titulo">
-      <h2 id="catalogos-titulo">Catálogos de planificación</h2>
+      <h2 id="catalogos-titulo">Administración de catálogos</h2>
       <p className="ayuda">
-        Desactivar una entrada evita nuevas selecciones y conserva sus referencias históricas.
+        Las entradas inactivas se conservan en el historial y se excluyen de nuevas selecciones.
       </p>
       <label className="m1-campo">
         Catálogo
@@ -50,7 +52,7 @@ export default function Catalogos({
         </select>
       </label>
       {!administrar && (
-        <p className="m1-nota">Solo Administración puede registrar, editar o desactivar entradas.</p>
+        <p className="m1-nota">Solo los administradores pueden editar el catálogo.</p>
       )}
       {administrar && (
         <form
@@ -122,18 +124,20 @@ export default function Catalogos({
                     <button
                       className="boton-secundario"
                       disabled={ocupado}
+                      aria-label={`Editar ${e.nombre}`}
                       onClick={() => setEntrada({ ...e })}
                     >
-                      Editar {e.nombre}
+                      Editar
                     </button>
                     <button
                       className="boton-secundario"
                       disabled={ocupado}
+                      aria-label={`${e.activo ? 'Desactivar' : 'Activar'} ${e.nombre}`}
                       onClick={() =>
                         ejecutar({ tipo: 'catalogo', catalogo: tipo, entrada: { ...e, activo: !e.activo } })
                       }
                     >
-                      {e.activo ? 'Desactivar' : 'Activar'} {e.nombre}
+                      {e.activo ? 'Desactivar' : 'Activar'}
                     </button>
                   </td>
                 )}
@@ -144,8 +148,7 @@ export default function Catalogos({
       </div>
       {!catalogos[tipo].length && (
         <p className="estado-vacio">
-          Todavía no hay entradas. Administración debe registrar {nombres[tipo].toLowerCase()} para poder
-          seleccionarlos.
+          No hay registros en este catálogo.
         </p>
       )}
     </section>

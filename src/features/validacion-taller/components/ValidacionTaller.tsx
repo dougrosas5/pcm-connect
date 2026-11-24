@@ -1,12 +1,12 @@
-import EditorEta from './EditorEta'
-import EvaluacionTareas from './EvaluacionTareas'
-import { conflictosPendientes } from '../../revision-pcm/model/revision'
+import DetalleTaller from './DetalleTaller'
+import { abiertaTaller, puedeEvaluar } from '../model/evaluacion'
 import { useRef, useState } from 'react'
-import { finParada, mostrarFecha } from '../../planificacion/model/modelo'
+import { mostrarFecha } from '../../planificacion/model/modelo'
 import type { Actor, Comando, Registro } from '../../../types/pcm'
-import { filtrarPlanes, filtrosVacios, gruposTaller, nombreReferencia, progresoAnterior } from '../model/bandeja'
+import { filtrarPlanes, filtrosVacios, gruposTaller, nombreReferencia, progresoAnterior, progresoTaller, tonoTaller } from '../model/bandeja'
 import type { FiltrosTaller } from '../model/bandeja'
-import TablaPropuesta from '../../planificacion/components/TablaPropuesta'
+import Icono from '../../../components/Icono'
+import { etiquetaPlan } from '../../../components/etiquetasEstado'
 import '../styles/validacion-taller.css'
 
 type Props = {
@@ -15,10 +15,12 @@ type Props = {
   ocupado: boolean
   cambiosPCM: boolean
   ejecutar: (comando: Comando) => Promise<boolean>
+  actualizar: () => void
+  usarRolTaller?: () => void
 }
 
 export default function ValidacionTaller(props: Props) {
-  const { registro, actor, ocupado, ejecutar } = props
+  const { registro, actor, ocupado } = props
   const [seleccion, setSeleccion] = useState('')
   const [historial, setHistorial] = useState(false)
   const [filtros, setFiltros] = useState<FiltrosTaller>(filtrosVacios)
@@ -30,29 +32,34 @@ export default function ValidacionTaller(props: Props) {
     setFiltros({ ...filtros, [campo]: valor })
   }
   function opciones(campo: 'remolcadorId' | 'ubicacionId') {
-    return [...new Map(registro.planes.filter((p) => p[campo]).map((p) =>
+    return [...new Map(registro.planes.filter((p) => p.estado !== 'Borrador' && p[campo]).map((p) =>
       [p[campo], nombreReferencia(p, registro, p[campo])])).entries()]
   }
   return <div className="m2">
     <div hidden={Boolean(plan)}>
-      <h2>Bandeja de planificaciones</h2>
+      <div className="m2-cabecera-bandeja">
+        <h2>Bandeja de planificaciones</h2>
+        <div className="m1-acciones" aria-label="Vistas de planificaciones">
+          <button className="boton-secundario" aria-pressed={!historial} onClick={() => setHistorial(false)}>Activas</button>
+          <button className="boton-secundario" aria-pressed={historial} onClick={() => setHistorial(true)}>Historial</button>
+          <button className="boton-secundario" disabled={ocupado} onClick={props.actualizar}><Icono nombre="actualizar" />Actualizar datos</button>
+        </div>
+      </div>
+      {!plan && !puedeEvaluar(actor) && <div className="m2-aviso-rol">
+        <span>Estás consultando como {actor.rol}. La evaluación la realiza Taller.</span>
+        {props.usarRolTaller && <button className="boton-secundario" disabled={ocupado} onClick={props.usarRolTaller}>Usar rol Taller</button>}
+        {props.cambiosPCM && <span>Guardá los cambios de Planificación para cambiar de rol.</span>}
+      </div>}
       <dl className="m2-indicadores" aria-label="Indicadores de todas las planificaciones">
-        {gruposTaller.map((g) => (
-          <div key={g.nombre}>
+        {gruposTaller.map((g, i) => (
+          <div key={g.nombre} data-tono={(['ejecucion', 'pendiente', 'finalizado', 'aceptado', 'solapamiento'] as const)[i]}>
             <dt>{g.nombre}</dt>
-            <dd>{g.estados.length
-              ? registro.planes.filter((p) => g.estados.includes(p.estado)).length
-              : 'Por configurar'}
-            </dd>
+            <dd>{g.estados.length ? registro.planes.filter((p) => g.estados.includes(p.estado)).length : <span title="Sin datos de programación o ejecución">—</span>}</dd>
           </div>
         ))}
       </dl>
-      <p className="m1-nota">Indicadores del total guardado. Programación, ejecución y cierre pendientes de definición. Los borradores se muestran en consulta.</p>
-      <div className="m1-acciones" aria-label="Vistas de planificaciones">
-        <button className="boton-secundario" aria-pressed={!historial} onClick={() => setHistorial(false)}>Activas</button>
-        <button className="boton-secundario" aria-pressed={historial} onClick={() => setHistorial(true)}>Historial</button>
-      </div>
-      <section className="m1-panel" aria-label="Filtros de planificaciones">
+      <p className="m2-nota-indicadores ayuda">Programación y ejecución sin datos registrados.</p>
+      <section className="m1-panel m2-filtros" aria-label="Filtros de planificaciones">
         <div className="m1-cabecera">
           <label className="m1-campo">Filtrar por TAG
             <input type="search" value={filtros.tag} onChange={(e) => filtrar('tag', e.target.value)} />
@@ -72,7 +79,7 @@ export default function ValidacionTaller(props: Props) {
           <label className="m1-campo">Filtrar por estado
             <select value={filtros.estado} onChange={(e) => filtrar('estado', e.target.value)}>
               <option value="">Todos</option>
-              {['Borrador', 'Enviado a Taller', 'En evaluación', 'Evaluado', 'En reevaluación', 'Confirmada', 'Cancelada'].map((s) => <option key={s}>{s}</option>)}
+              {(Object.keys(etiquetaPlan) as (keyof typeof etiquetaPlan)[]).filter(s => s !== 'Borrador').map((s) => <option key={s} value={s}>{etiquetaPlan[s]}</option>)}
             </select>
           </label>
           <label className="m1-campo">ETA final desde
@@ -82,30 +89,36 @@ export default function ValidacionTaller(props: Props) {
             <input type="date" value={filtros.hasta} onChange={(e) => filtrar('hasta', e.target.value)} />
           </label>
         </div>
-        <p className="m1-nota">Fechas inclusivas · hora de Montevideo.</p>
-        <button className="boton-secundario" onClick={() => setFiltros(filtrosVacios)}>Limpiar filtros</button>
+        <div className="m2-pie-filtros">
+          <p className="m1-nota">ETA final · fechas inclusivas.</p>
+          <button className="boton-secundario" onClick={() => setFiltros(filtrosVacios)}>Limpiar filtros</button>
+        </div>
         {filtros.desde && filtros.hasta && filtros.desde > filtros.hasta && <p role="alert" className="m1-error">La fecha desde no puede ser posterior a la fecha hasta.</p>}
       </section>
-      <p role="status">{filtradas.length} planificaciones</p>
-      {historial && <p className="m1-nota">Revisiones PCM confirmadas o canceladas. «Confirmada» no significa trabajo ejecutado; el cierre de ejecución pertenece a un módulo posterior.</p>}
+      <p className="m2-resultados" role="status">{filtradas.length} {filtradas.length === 1 ? 'planificación' : 'planificaciones'} · {historial ? 'Historial de revisión PCM' : 'Activas'}</p>
+      {historial && <p className="m1-nota">Confirmadas o canceladas por PCM. La confirmación no acredita la ejecución del trabajo.</p>}
       {!filtradas.length ? (
         <p className="estado-vacio">{historial
-          ? 'No hay planificaciones finalizadas en revisión PCM.'
-          : registro.planes.length
+          ? 'No hay planificaciones confirmadas o canceladas por PCM.'
+          : Object.values(filtros).some(Boolean)
             ? 'No hay coincidencias. Revisá o limpiá los filtros.'
-            : 'No hay planificaciones guardadas. Creá una desde Planificación.'}
+            : 'No hay planificaciones enviadas a Taller. En Planificación, completá los datos y pulsá Enviar a Taller.'}
         </p>
       ) : (
         <div className="tabla-contenedor" tabIndex={0} role="region" aria-label="Bandeja de Taller; desplazamiento horizontal disponible">
           <table className="tabla-tareas m2-bandeja">
-            <caption>Planificaciones compartidas con PCM · fechas en Montevideo</caption>
+            <caption>Planificaciones recibidas de PCM</caption>
             <thead>
               <tr>{[
                 'TAG', 'Remolcador', 'Ubicación', 'ETA inicial', 'ETA final', 'Parada (h)',
-                'Tareas', 'Estado', 'Progreso de evaluación', 'Última actualización de ETA', 'Acción'
+                'Tareas', 'Estado', 'Progreso de evaluación', 'Último cambio de ETA', 'Acción'
               ].map((t) => <th scope="col" key={t}>{t}</th>)}</tr>
             </thead>
-            <tbody>{filtradas.map((p) => (
+            <tbody>{filtradas.map((p) => {
+              const accion = puedeEvaluar(actor) && abiertaTaller(p) ? (p.estado === 'Enviado a Taller' ? 'Evaluar' : 'Continuar') : 'Ver'
+              const progreso = progresoTaller(p)
+              const cambioEta = p.historialEta?.at(-1)
+              return (
               <tr key={p.id}>
                 <th scope="row">{p.tag}</th>
                 <td>{nombreReferencia(p, registro, p.remolcadorId)}</td>
@@ -117,70 +130,27 @@ export default function ValidacionTaller(props: Props) {
                 <td>{mostrarFecha(p.eta)}</td>
                 <td className="numero">{p.horasParada || 'Sin definir'}</td>
                 <td className="numero">{p.filas.length}</td>
-                <td><span className="estado">{p.estado}</span></td>
-                <td>{progresoAnterior(p)}</td>
-                <td>{p.historialEta?.length ? mostrarFecha(p.historialEta.at(-1)!.fecha) : 'Sin cambios registrados'}</td>
+                <td><span className="estado" data-tono={tonoTaller(p.estado)}>{etiquetaPlan[p.estado]}</span></td>
+                <td>{progreso.total > 0 && <progress max={progreso.total} value={progreso.decididas} aria-label={`Progreso de ${p.tag}`} />}
+                  <small>{progresoAnterior(p)}</small></td>
+                <td>{cambioEta ? <>{mostrarFecha(cambioEta.fecha)}<small className="m1-original">{cambioEta.usuario}</small></> : 'Sin cambios'}</td>
                 <td>
-                  <button className="boton-secundario" aria-label={`Consultar ${p.tag}`} onClick={(e) => {
+                  <button className="boton-secundario" aria-label={`${accion} ${p.tag}`} onClick={(e) => {
                     retorno.current = e.currentTarget
                     setSeleccion(p.id)
                     requestAnimationFrame(() => titulo.current?.focus())
-                  }}>Consultar</button>
+                  }}>{accion}</button>
                 </td>
               </tr>
-            ))}</tbody>
+              )
+            })}</tbody>
           </table>
         </div>
       )}
     </div>
-    {plan && <section aria-labelledby="m2-detalle">
-      <button className="boton-secundario" onClick={() => {
-        setSeleccion('')
-        requestAnimationFrame(() => retorno.current?.focus())
-      }}>Volver a la bandeja</button>
-      <div className="m1-panel">
-        <div className="m1-encabezado">
-          <h2 id="m2-detalle" tabIndex={-1} ref={titulo}>Evaluación · {plan.tag}</h2>
-          <span className="estado">{plan.estado}</span>
-        </div>
-        <dl className="m1-cabecera m2-datos">{[
-          ['TAG', plan.tag],
-          ['Remolcador', nombreReferencia(plan, registro, plan.remolcadorId)],
-          ['Ubicación', nombreReferencia(plan, registro, plan.ubicacionId)],
-          ['ETA inicial · solo lectura', mostrarFecha(plan.etaInicial ?? plan.eta)],
-          ['ETA final · vigente', mostrarFecha(plan.eta)],
-          ['Tiempo de parada', plan.horasParada ? `${plan.horasParada} h` : 'Sin definir'],
-          ['Fin previsto de parada', mostrarFecha(finParada(plan))],
-          ['Estado', plan.estado],
-          ['Planificador responsable', plan.planificador]
-        ].map(([nombre, valor]) => <div key={nombre}><dt>{nombre}</dt><dd>{valor}</dd></div>)}</dl>
-        <p className="m1-nota">Fechas en Montevideo. {plan.origenEtaInicial !== 'creacion' ? 'Plan anterior al Módulo 2: la ETA inicial refleja el dato disponible al incorporar el historial; si estaba vacío, permanece sin definir.' : 'La ETA inicial quedó fijada al crear esta planificación.'}</p>
-        <EditorEta
-          key={`${plan.id}:${plan.version}:${actor.rol}`}
-          plan={plan}
-          actor={actor}
-          ocupado={ocupado}
-          cambiosPCM={props.cambiosPCM}
-          ejecutar={ejecutar}
-        />
-        {Boolean(plan.historialEta?.length) && <p className="m1-nota">Disponibilidad pendiente de revisión por cambio de ETA. Las decisiones previas se conservan. {conflictosPendientes(plan).length} advertencias de reprogramación.</p>}
-        {!!conflictosPendientes(plan).length && <ul className="m1-nota">{conflictosPendientes(plan).map((c) => <li key={c.id}>{c.detalle} · {c.estado}</li>)}</ul>}
-      </div>
-      <section className="m1-panel" aria-label="Historial de ETA">
-        <h3>Historial de cambios de ETA</h3>
-        {!plan.historialEta?.length ? <p>Sin cambios de ETA registrados.</p> : (
-          <ol className="m1-lista-historial">{[...plan.historialEta].reverse().map((c, i) => (
-            <li key={`${c.fecha}:${i}`}>
-              <strong>{mostrarFecha(c.fecha)} · {c.usuario}</strong>
-              <p>{mostrarFecha(c.anterior)} → {mostrarFecha(c.nuevo)}</p>
-              <p>{c.comentario}</p>
-            </li>
-          ))}</ol>
-        )}
-      </section>
-      <p className="m1-nota">Propuesta PCM vigente en consulta. Las correcciones y decisiones anteriores se conservan en el historial.</p>
-      <TablaPropuesta plan={plan} registro={registro} editable={false} cambiar={() => {}} />
-      <EvaluacionTareas plan={plan} actor={actor} ocupado={ocupado} ejecutar={ejecutar} />
-    </section>}
+    {plan && <DetalleTaller key={plan.id} {...props} plan={plan} titulo={titulo} volver={() => {
+      setSeleccion('')
+      requestAnimationFrame(() => retorno.current?.focus())
+    }} />}
   </div>
 }

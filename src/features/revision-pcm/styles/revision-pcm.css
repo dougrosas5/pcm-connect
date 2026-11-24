@@ -22,8 +22,6 @@
 .m3-check input { flex: 0 0 auto; width: 18px; height: 18px; margin: 0; accent-color: var(--grafito); }
 .m3-modal pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
 .m3-modal details { margin-block: 12px; }
-.m2-evaluacion { border-top: 1px solid var(--borde); padding-block: 12px; }
-.m2-evaluacion .m3-campos { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 @media (max-width: 700px) {
   .m3-modal { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); }
   .m3-modal-cabecera, .m3-modal-pie { padding: 12px; }

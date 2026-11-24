@@ -1,6 +1,7 @@
 import type { Actor, Comando, Registro } from '../../../types/pcm.ts'
 import { diferenciasFuente, elegibles, enteroPositivo, erroresEnvio, etaValida, positivo, puedeCambiarEta, validarFuente } from './modelo.ts'
-import { aplicarRevision, cerradaPCM, evaluacionVigente, prepararRevision, registrarConflictos, resolucionTarea, tareaActiva, tareaInterna } from '../../revision-pcm/model/revision.ts'
+import { aplicarRevision, cerradaPCM, evaluacionVigente, firma, registrarConflictos, tareaActiva, tareaInterna } from '../../revision-pcm/model/revision.ts'
+import { abiertaTaller, ajustarPropuestaEnTaller, guardarEvaluacion, puedeEvaluar, registrarEvaluacion, versionTarea } from '../../validacion-taller/model/evaluacion.ts'
 
 export function aplicarComando(
   actual: Registro,
@@ -13,8 +14,26 @@ export function aplicarComando(
   const siguiente = structuredClone(actual)
   const pcm = actor.rol === 'Planificador' || actor.rol === 'Administrador'
   function auditar(entidad: string, anterior: unknown, nuevo: unknown) {
-    siguiente.historial.push({ fecha, usuario: actor.nombre, usuarioId: actor.id, rol: actor.rol, accion: comando.tipo, entidad, anterior, nuevo,
-      ...('planId' in comando ? { planId: comando.planId } : {}), ...('tareaId' in comando ? { tareaId: comando.tareaId } : {}) })
+    siguiente.historial.push({
+      fecha, usuario: actor.nombre, usuarioId: actor.id, rol: actor.rol, accion: comando.tipo, entidad,
+      anterior: structuredClone(anterior), nuevo: structuredClone(nuevo),
+      ...('planId' in comando ? { planId: comando.planId } : {}),
+      ...('tareaId' in comando ? { tareaId: comando.tareaId } : {})
+    })
+  }
+  if (comando.tipo === 'guardar' && !comando.enviar) {
+    const vigente = siguiente.planes.find(p => p.id === comando.plan.id)
+    if (vigente && ['Enviado a Taller', 'En evaluación'].includes(vigente.estado)) {
+      if (!pcm || (vigente.planificadorId !== actor.id && actor.rol !== 'Administrador'))
+        throw new Error('Solo el planificador responsable o Administración puede ajustar las tareas enviadas.')
+      if (vigente.version !== comando.plan.version) throw new Error('La planificación cambió. Reabrí la versión vigente.')
+      const anterior = structuredClone(vigente)
+      ajustarPropuestaEnTaller(vigente, comando.plan, siguiente, actor, fecha)
+      auditar(vigente.tag, anterior, vigente)
+      siguiente.revision++
+      siguiente.solicitudes[solicitud] = siguiente.revision
+      return siguiente
+    }
   }
   if (comando.tipo === 'guardar') {
     if (!pcm) throw new Error('Solo Planificador o Administrador puede guardar o enviar.')
@@ -26,6 +45,11 @@ export function aplicarComando(
     const plan = structuredClone(comando.plan)
     // Las resoluciones y sus firmas solo se escriben mediante comandos de revisión.
     delete plan.revisionPCM
+    delete plan.borradorTaller
+    delete plan.etaPredictiva
+    delete plan.historialPredictiva
+    if (anterior?.etaPredictiva) plan.etaPredictiva = structuredClone(anterior.etaPredictiva)
+    if (anterior?.historialPredictiva) plan.historialPredictiva = structuredClone(anterior.historialPredictiva)
     if (!anterior && !etaValida(plan.eta))
       throw new Error('ETA: completá una fecha y hora válidas antes de crear la planificación.')
     if (anterior && plan.eta !== anterior.eta)
@@ -56,7 +80,7 @@ export function aplicarComando(
               f.ordenes.some((om) => oms.has(om.numero) || fila.ordenes.some((o) => o.numero === om.numero)))
           )
       )
-      if (conflicto) throw new Error(`${fila.id}: conflicto con la planificación ${conflicto.tag}.`)
+      if (conflicto) throw new Error(`${fila.id}: la tarea o una de sus OM ya figura en ${conflicto.tag}.`)
     }
     if (comando.enviar) {
       const errores = erroresEnvio(plan, actual)
@@ -79,16 +103,33 @@ export function aplicarComando(
     )
     siguiente.planes = [...actual.planes.filter((p) => p.id !== plan.id), plan]
     auditar(plan.tag, anterior ?? null, plan)
-  } else if (comando.tipo === 'cambiarEta') {
+  } else if (comando.tipo === 'guardarPredictiva') {
+    if (!puedeCambiarEta(actor)) throw new Error('No tenés permiso para guardar la ETA predictiva.')
+    const plan = siguiente.planes.find(p => p.id === comando.planId)
+    if (!plan || plan.version !== comando.version) throw new Error('La planificación cambió. Reabrí la versión vigente.')
+    if (cerradaPCM(plan)) throw new Error('La planificación es de solo consulta.')
+    if (!etaValida(comando.eta)) throw new Error('Ingresá una ETA predictiva válida.')
+    if (plan.etaPredictiva?.valor === comando.eta) throw new Error('La ETA predictiva no cambió.')
+    const anterior = structuredClone(plan)
+    plan.historialPredictiva ??= []
+    plan.historialPredictiva.push({ ...firma(actor, fecha), anterior: plan.etaPredictiva?.valor ?? '', nuevo: comando.eta })
+    plan.etaPredictiva = { valor: comando.eta, confirmada: false }
+    plan.actualizado = fecha
+    plan.version++
+    auditar(plan.tag, anterior, plan)
+  } else if (comando.tipo === 'cambiarEta' || comando.tipo === 'confirmarPredictiva') {
     if (!puedeCambiarEta(actor))
       throw new Error('Solo PCM o un Supervisor de Taller autorizado puede modificar la ETA final.')
     const plan = siguiente.planes.find((p) => p.id === comando.planId)
     if (!plan || plan.version !== comando.version)
       throw new Error('La planificación cambió. Actualizá los datos antes de modificar la ETA final.')
     if (cerradaPCM(plan)) throw new Error('La planificación confirmada o cancelada es de solo consulta.')
+    if (comando.tipo === 'confirmarPredictiva' &&
+      (!comando.confirmada || !plan.etaPredictiva || plan.etaPredictiva.confirmada || plan.etaPredictiva.valor !== comando.eta))
+      throw new Error('La ETA predictiva cambió o ya fue confirmada. Revisá la predicción vigente.')
     if (!etaValida(comando.eta)) throw new Error('Ingresá una ETA final válida.')
-    if (!comando.comentario.trim()) throw new Error('El cambio de ETA final requiere un comentario.')
-    if (comando.eta === plan.eta) throw new Error('La ETA final no cambió; no se registró un evento duplicado.')
+    if (!comando.comentario.trim()) throw new Error('Indicá el motivo del cambio de ETA final.')
+    if (comando.eta === plan.eta) throw new Error('La ETA final coincide con la vigente. No se registró un cambio.')
     const anterior = structuredClone(plan)
     plan.etaInicial ??= plan.eta
     plan.origenEtaInicial ??= plan.eta ? 'heredada' : 'sin-dato'
@@ -101,8 +142,10 @@ export function aplicarComando(
       anterior: plan.eta,
       nuevo: comando.eta,
       comentario: comando.comentario.trim(),
-      revisionDisponibilidad: 'pendiente'
+      revisionDisponibilidad: 'pendiente',
+      ...(comando.tipo === 'confirmarPredictiva' ? { origen: 'predictiva' } : {})
     })
+    if (comando.tipo === 'confirmarPredictiva') plan.etaPredictiva!.confirmada = true
     plan.eta = comando.eta
     plan.actualizado = fecha
     plan.version++
@@ -165,13 +208,12 @@ export function aplicarComando(
     })
     auditar('Fuente Excel', actual.fuente, comando.tareas)
   } else {
-    if (!['Taller', 'Supervisor Taller', 'Administrador'].includes(actor.rol)) throw new Error('Solo Taller puede evaluar.')
+    if (!puedeEvaluar(actor)) throw new Error('Solo Taller puede evaluar.')
     const plan = siguiente.planes.find((p) => p.id === comando.planId)
-    if (!plan || !['Enviado a Taller', 'En evaluación', 'En reevaluación'].includes(plan.estado))
+    if (!plan || !abiertaTaller(plan))
       throw new Error('La planificación no está disponible para evaluación.')
     if (comando.version !== undefined && comando.version !== plan.version) throw new Error('La planificación cambió. Reabrí la versión vigente.')
     const anterior = structuredClone(plan)
-    const revision = prepararRevision(plan, actor, fecha)
     if (comando.tipo === 'evaluar') {
       const fila = plan.filas.find((f) => f.id === comando.tareaId)
       if (!fila || !tareaInterna(plan, fila))
@@ -185,25 +227,12 @@ export function aplicarComando(
       const tiempoAceptado = comando.tiempoAceptado ?? fila.tiempoPropuesto
       const trabajadoresAceptados = comando.trabajadoresAceptados ?? fila.trabajadores
       if (!positivo(tiempoAceptado) || !enteroPositivo(trabajadoresAceptados)) throw new Error('Las horas deben ser positivas y los trabajadores enteros positivos.')
-      Object.defineProperty(plan.evaluaciones, fila.id, { enumerable: true, configurable: true, writable: true, value: {
-        resultado: comando.resultado,
-        motivo: comando.motivo.trim(),
-        usuario: actor.nombre,
-        fecha, usuarioId: actor.id, versionTarea: revision.tareas[fila.id].version,
-        tiempoAceptado, trabajadoresAceptados
-      } })
-      revision.tareas[fila.id].evaluaciones.push(structuredClone(plan.evaluaciones[fila.id]))
-      if (resolucionTarea(plan, fila.id)?.tipo === 'Devuelta a revisión') delete revision.tareas[fila.id].resolucion
-      plan.estado = revision.versionContenido > 1 ? 'En reevaluación' : 'En evaluación'
+      registrarEvaluacion(plan, { tareaId: fila.id, versionTarea: versionTarea(plan, fila.id),
+        resultado: comando.resultado, motivo: comando.motivo, horas: tiempoAceptado, trabajadores: trabajadoresAceptados }, actor, fecha)
+      if (plan.estado === 'Enviado a Taller') plan.estado = 'En evaluación'
     } else {
-      if (
-        plan.filas.some(
-          (f) => tareaInterna(plan, f) && !evaluacionVigente(plan, f.id)
-        )
-      )
-        throw new Error('Hay tareas internas pendientes de evaluación.')
-      plan.estado = 'Evaluado'
-      revision.versionEvaluada = revision.versionContenido
+      guardarEvaluacion(plan, comando.tipo === 'evaluacionTaller' ? comando.ajustes : [],
+        comando.tipo === 'finalizar' || comando.finalizar, actor, fecha)
     }
     plan.actualizado = fecha
     plan.version++

@@ -29,6 +29,14 @@ export type Evaluacion = {
   tiempoAceptado?: string
   trabajadoresAceptados?: string
 }
+export type AjusteTaller = {
+  tareaId: string
+  versionTarea: number
+  resultado: 'Pendiente' | Evaluacion['resultado']
+  horas: string
+  trabajadores: string
+  motivo: string
+}
 export type Firma = { usuarioId: string; usuario: string; rol: Rol; fecha: string }
 export type ResolucionPCM = Firma & { tipo: 'Tercerizada' | 'Eliminada' | 'Devuelta a revisión'; versionTarea: number }
 export type CorreccionPCM = Pick<FilaPropuesta, 'descripcion' | 'criticidad' | 'tiempoPropuesto' | 'trabajadores' | 'responsableId'>
@@ -67,6 +75,8 @@ export type Plan = {
   etaInicial?: string
   origenEtaInicial?: 'creacion' | 'heredada' | 'sin-dato'
   historialEta?: CambioEta[]
+  etaPredictiva?: { valor: string; confirmada: boolean }
+  historialPredictiva?: (Firma & { anterior: string; nuevo: string })[]
   horasParada: string
   planificador: string
   planificadorId: string
@@ -76,6 +86,7 @@ export type Plan = {
   // Nombres congelados al enviar; un catálogo puede editarse o desactivarse después.
   referencias: Record<string, EntradaCatalogo>
   evaluaciones: Record<string, Evaluacion>
+  borradorTaller?: AjusteTaller[]
   revisionPCM?: RevisionPCM
 }
 export type CambioEta = {
@@ -87,6 +98,7 @@ export type CambioEta = {
   comentario: string
   revisionDisponibilidad: 'pendiente'
   rol?: Rol
+  origen?: 'predictiva'
 }
 export type Evento = {
   fecha: string
@@ -122,6 +134,9 @@ export type Registro = {
 export type Comando =
   | { tipo: 'guardar'; plan: Plan; enviar: boolean }
   | { tipo: 'cambiarEta'; planId: string; version: number; eta: string; comentario: string }
+  | { tipo: 'guardarPredictiva'; planId: string; version: number; eta: string }
+  | { tipo: 'confirmarPredictiva'; planId: string; version: number; eta: string; comentario: string; confirmada: boolean }
+  | { tipo: 'evaluacionTaller'; planId: string; version: number; ajustes: AjusteTaller[]; finalizar: boolean }
   | { tipo: 'catalogo'; catalogo: TipoCatalogo; entrada: EntradaCatalogo }
   | { tipo: 'importar'; procedencia: string; tareas: TareaFuente[] }
   | { tipo: 'evaluar'; planId: string; tareaId: string; resultado: 'Aceptada' | 'Rechazada'; motivo: string; version?: number; tiempoAceptado?: string; trabajadoresAceptados?: string }

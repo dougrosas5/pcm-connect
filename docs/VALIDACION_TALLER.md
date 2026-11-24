@@ -2,15 +2,15 @@
 
 ## Alcance
 
-Validación Taller utiliza los mismos planes v1.3 de Planificación. Muestra bandeja, filtros, cabecera detallada, propuesta vigente, evaluaciones históricas e historial de ETA. Desde el Módulo 3, registra aceptaciones o rechazos de la **TAREA/PM completa**, con motivo obligatorio al rechazar y horas/trabajadores separados de la propuesta. Las decisiones quedan congeladas por versión. Consultar el [contrato de Revisión PCM](REVISION_PCM.md).
+Validación Taller utiliza los mismos planes v1.3 de Planificación. Muestra bandeja, filtros, cabecera detallada, propuesta vigente, evaluaciones históricas e historial de ETA. Taller evalúa la **TAREA/PM completa** con comentario obligatorio al rechazar. La tabla distingue la propuesta de PCM y los ajustes de Taller, conserva las OM y sus costos, y excluye del dictamen interno las tareas tercerizadas. Se puede guardar un borrador parcial, editarlo y finalizarlo con las decisiones vigentes. Consultar el [contrato de Revisión PCM](REVISION_PCM.md).
 
-La bandeja incluye TAG, remolcador, ubicación, ETA inicial y final, parada, cantidad de tareas, estado, progreso histórico, última modificación de ETA y acción de consulta. Los filtros se combinan por TAG, remolcador, ubicación, estado y fechas inclusivas de ETA final en Montevideo. Un rango invertido informa error.
+La bandeja incluye TAG, remolcador, ubicación, ETA inicial y final, parada, cantidad de tareas, estado, progreso de la evaluación, última modificación de ETA y acciones Evaluar, Continuar o Ver según rol y estado. Los borradores de PCM quedan fuera de la bandeja. Los filtros se combinan por TAG, remolcador, ubicación, estado y fechas inclusivas de ETA final en Montevideo. Un rango invertido informa error.
 
-Los indicadores existentes corresponden a Enviado a Taller, En evaluación (incluye reevaluación) y Evaluado. Programadas y En curso permanecen «Por configurar». Historial contiene confirmadas o canceladas por PCM; ninguno de esos estados equivale a trabajo ejecutado. La configuración está en `src/features/validacion-taller/model/bandeja.ts`.
+Los indicadores visibles corresponden a Enviado a Taller, En evaluación (incluye reevaluación) y Evaluado. Los indicadores Programadas y En curso aparecen sin cifra hasta que existan sus estados. La confirmación de PCM no se usa como programación. Historial contiene confirmadas o canceladas por PCM; ninguno de esos estados equivale a trabajo ejecutado. La configuración está en `src/features/validacion-taller/model/bandeja.ts`.
 
 ## ETA y auditoría
 
-**Especificación posterior aprobada (17/11/2026), pendiente de implementación autorizada:** [Sistema definitivo de ETA](ETA.md). Distingue Inicial inmutable, Final operativa y Predictiva manual independiente; solo **Confirmar ETA predictiva**, con permiso, comparación previa, confirmación y motivo, aplica la predicción a la Final. No se altera la evaluación de Taller ni se duplican confirmaciones. Los párrafos siguientes describen el comportamiento ya implementado, sin Predictiva todavía.
+El [sistema de ETA](ETA.md) distingue Inicial inmutable, Final operativa y Predictiva manual independiente. **Confirmar ETA predictiva** compara la predicción guardada con la Final vigente y exige motivo para aplicarla. Las predicciones y los cambios operativos tienen historiales separados.
 
 `Plan.eta` es la ETA final operativa, conservando el nombre del contrato anterior. El fin de parada se calcula exclusivamente como ETA final más horas de parada, sin sumar duraciones de tareas. Las fechas se guardan en UTC ISO y se muestran en Montevideo.
 
@@ -28,7 +28,7 @@ No se migran los planes del Archivo local ni se cambia `pcm-connect.planificacio
 
 ## Permisos y servidor
 
-PCM (Planificador/Administrador conforme al contrato existente) y Supervisor Taller pueden modificar ETA final en planes abiertos. Taller común y Consulta solo leen la ETA. Taller, Supervisor y Administrador pueden evaluar; PCM Planificador no aprueba en nombre de Taller. Si hay cambios PCM sin guardar, deben guardarse antes de modificar ETA.
+PCM (Planificador/Administrador conforme al contrato existente) y Supervisor Taller pueden modificar ETA final en planes abiertos. Taller común y Consulta solo leen la ETA. Solo Taller y Supervisor Taller pueden evaluar y finalizar. En planes enviados y todavía sin finalizar, PCM puede ajustar las horas, el número de trabajadores y el responsable de tareas existentes. Se invalidan únicamente los ajustes y evaluaciones vigentes de las tareas modificadas y se conserva su historial. Si hay cambios PCM sin guardar, deben guardarse antes de modificar ETA.
 
 En modo demo los roles son simulados, sin autenticación ni seguridad real. En servidor, la API obtiene el perfil autenticado y aplica las mismas reglas del dominio. El rol Supervisor Taller requiere la migración `supabase/migrations/202611100001_supervisor_taller.sql` y asignación explícita a las cuentas autorizadas. La migración no concede ese rol automáticamente.
 
@@ -41,8 +41,8 @@ La configuración y verificación de Supabase se describe en [Módulo 1 v1.3](MO
 3. Consultar un plan y cambiar la final con comentario usando PCM o Supervisor Taller. Comprobar inicial fija, fin recalculado e historial.
 4. Volver a Planificación, reabrir y recargar: confirmar que se conservan los datos y la nueva ETA.
 5. Cambiar a Taller o Consulta: el editor no debe estar disponible. Un comentario vacío, misma fecha o versión obsoleta no registra cambios.
-6. Evaluar cada tarea interna y finalizar. Confirmar que Evaluado pasa a Revisión PCM; solo una confirmación o cancelación PCM la lleva a Historial.
+6. En rol Taller, evaluar las tareas internas. Guardar el borrador, volver a abrirlo y finalizar. Confirmar que aparece como Evaluada en Revisión PCM y que los ajustes quedan en consulta.
 
 ## Pendiente de definición e implementación
 
-Programación, ejecución y cierre; cupos por especialidad, turnos, compromisos nominales y resolución efectiva de la reprogramación. El Módulo 3 resolvió la evaluación por tarea completa, tercerización/eliminación/corrección y reenvío, y la separación de valores aceptados por Taller.
+Programación, ejecución y cierre. La vista de disponibilidad suma horas-persona comprometidas por especialidad para la ventana de ETA final y las ventanas solapadas. El cálculo usa aceptaciones guardadas e identifica la falta de cupos y turnos configurados. Las asignaciones nominales quedan para su etapa. El Módulo 3 resolvió la evaluación por tarea completa, tercerización/eliminación/corrección y reenvío, y la separación de valores aceptados por Taller.

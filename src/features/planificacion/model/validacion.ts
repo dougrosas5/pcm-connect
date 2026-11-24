@@ -1,6 +1,8 @@
 import { etaValida, validarFuente } from './modelo.ts'
 import type { Comando } from '../../../types/pcm.ts'
 import { validarRevisionPersistida } from '../../revision-pcm/model/validacion.ts'
+import { errorAjuste } from '../../validacion-taller/model/evaluacion.ts'
+import type { AjusteTaller } from '../../../types/pcm.ts'
 
 function texto(valor: unknown, maximo = 5000): valor is string {
   return typeof valor === 'string' && valor.length <= maximo
@@ -8,6 +10,18 @@ function texto(valor: unknown, maximo = 5000): valor is string {
 function objeto(valor: unknown): valor is Record<string, unknown> {
   return typeof valor === 'object' && valor !== null && !Array.isArray(valor)
 }
+function ajustesTaller(valor: unknown): valor is AjusteTaller[] {
+  return Array.isArray(valor) && valor.length <= 500 && valor.every(a =>
+    objeto(a) && texto(a.tareaId, 100) && Boolean(a.tareaId) &&
+    Number.isSafeInteger(a.versionTarea) && Number(a.versionTarea) > 0 &&
+    (a.resultado === 'Pendiente' || a.resultado === 'Aceptada' || a.resultado === 'Rechazada') &&
+    texto(a.horas, 100) && texto(a.trabajadores, 100) && texto(a.motivo))
+}
+
+function etaOpcional(valor: unknown) {
+  return texto(valor, 100) && (valor === '' || etaValida(valor))
+}
+
 export function validarComando(valor: unknown): asserts valor is Comando {
   if (!objeto(valor)) throw new Error('Comando inválido.')
   if (valor.tipo === 'guardar') {
@@ -50,6 +64,27 @@ export function validarComando(valor: unknown): asserts valor is Comando {
     )
       throw new Error('Campos de propuesta inválidos.')
     validarRevisionPersistida(p)
+    if (p.borradorTaller !== undefined && (!ajustesTaller(p.borradorTaller) ||
+      new Set(p.borradorTaller.map(a => a.tareaId)).size !== p.borradorTaller.length ||
+      p.borradorTaller.some(a => errorAjuste(a) || !(p.filas as { id: string }[]).some(f => f.id === a.tareaId))))
+      throw new Error('El borrador de Taller guardado no es válido.')
+    if (p.etaPredictiva !== undefined && (!objeto(p.etaPredictiva) || !texto(p.etaPredictiva.valor, 100) ||
+      !etaValida(p.etaPredictiva.valor) || typeof p.etaPredictiva.confirmada !== 'boolean'))
+      throw new Error('La ETA predictiva guardada no es válida.')
+    if (p.historialPredictiva !== undefined && (!Array.isArray(p.historialPredictiva) || p.historialPredictiva.some(c =>
+      !objeto(c) || !etaOpcional(c.anterior) || !texto(c.nuevo, 100) || !etaValida(c.nuevo) ||
+      !texto(c.fecha) || !etaValida(c.fecha) || !texto(c.usuarioId, 80) || !texto(c.usuario) ||
+      !['Planificador', 'Taller', 'Supervisor Taller', 'Administrador', 'Consulta'].includes(String(c.rol)))))
+      throw new Error('El historial de ETA predictiva no es válido.')
+  } else if (valor.tipo === 'evaluacionTaller') {
+    if (!texto(valor.planId, 80) || !valor.planId || !Number.isSafeInteger(valor.version) || Number(valor.version) < 1 ||
+      typeof valor.finalizar !== 'boolean' || !ajustesTaller(valor.ajustes))
+      throw new Error('La evaluación de Taller no es válida.')
+  } else if (valor.tipo === 'guardarPredictiva' || valor.tipo === 'confirmarPredictiva') {
+    if (!texto(valor.planId, 80) || !valor.planId || !Number.isSafeInteger(valor.version) || Number(valor.version) < 1 ||
+      !texto(valor.eta, 100) || !etaValida(valor.eta) ||
+      (valor.tipo === 'confirmarPredictiva' && (valor.confirmada !== true || !texto(valor.comentario) || !valor.comentario.trim())))
+      throw new Error('Revisá la ETA predictiva y la confirmación.')
   } else if (valor.tipo === 'cambiarEta') {
     if (
       !texto(valor.planId, 80) || !valor.planId ||
@@ -57,7 +92,7 @@ export function validarComando(valor: unknown): asserts valor is Comando {
       !texto(valor.eta, 100) || !etaValida(valor.eta) ||
       !texto(valor.comentario) || !valor.comentario.trim()
     )
-      throw new Error('Ingresá una ETA final válida y un comentario para registrar el cambio.')
+      throw new Error('Ingresá una ETA final válida e indicá el motivo del cambio.')
   } else if (valor.tipo === 'catalogo') {
     const e = valor.entrada
     if (

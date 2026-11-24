@@ -26,6 +26,9 @@ export function useRegistroPCM() {
     pcm &&
     plan.estado === 'Borrador' &&
     (plan.planificadorId === actor.id || actor.rol === 'Administrador')
+  const puedeAjustarEnTaller = listo && !ocupado && pcm &&
+    ['Enviado a Taller', 'En evaluación'].includes(plan.estado) &&
+    (plan.planificadorId === actor.id || actor.rol === 'Administrador')
 
   useEffect(() => {
     if (!sesion) return
@@ -47,7 +50,7 @@ export function useRegistroPCM() {
         } catch {
           setRecuperacionBloqueada(true)
           setError(
-            'Hay una copia de recuperación ilegible. No se modificó. Descargá un respaldo y revisá la copia antes de continuar.'
+            'No se pudo leer la copia de recuperación. Sigue intacta. Descargá un respaldo antes de continuar.'
           )
           return
         }
@@ -56,7 +59,7 @@ export function useRegistroPCM() {
         setListo(true)
         if (recuperado)
           setMensaje(
-            'Se recuperaron cambios sin guardar de este usuario y navegador. Podés guardarlos o compararlos con el plan persistido.'
+            'Se recuperaron cambios sin guardar. Revisalos antes de continuar.'
           )
       })
       .catch((err) => {
@@ -125,24 +128,24 @@ export function useRegistroPCM() {
       if (comando.tipo === 'guardar') {
         const guardado = carga.registro.planes.find((p) => p.id === comando.plan.id)
         if (!guardado)
-          throw new Error('La respuesta no contiene la planificación. Reintentá la misma acción.')
+          throw new Error('No se pudo verificar el guardado. Reintentá la misma acción.')
         setPlan(guardado)
         setSucio(false)
         setMensaje(
           comando.enviar
-            ? `${guardado.tag} enviada a Taller. Se conservó la propuesta completa.`
-            : `${guardado.tag} · Borrador guardado. Podés retomarlo desde el selector.`
+            ? `${guardado.tag} enviada a Taller.`
+            : `${guardado.tag} · ${guardado.estado === 'Borrador' ? 'Borrador guardado.' : 'Ajustes de tareas guardados.'}`
         )
       } else
         setMensaje(
           comando.tipo === 'importar'
-            ? 'Importación guardada. Las propuestas existentes conservan sus datos.'
-            : 'Cambios guardados con su historial.'
+            ? 'Importación guardada. Se conservan las propuestas existentes.'
+            : 'Cambios guardados.'
         )
       solicitudPendiente.current = null
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar. Reintentá la misma acción.')
+      setError(err instanceof Error ? err.message : 'No se pudieron guardar los cambios. Reintentá la misma acción.')
       return false
     } finally {
       cerrojo.current = false
@@ -165,7 +168,7 @@ export function useRegistroPCM() {
             (plan.id ? plan : nuevoPlan(carga.actor, crypto.randomUUID()))
         )
       setMensaje(
-        'Datos actualizados. Los cambios sin guardar se conservan en pantalla; reabrí el plan guardado para comparar versiones.'
+        sucio ? 'Datos actualizados. Los cambios sin guardar siguen en pantalla.' : 'Datos actualizados.'
       )
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudieron actualizar los datos.')
@@ -178,6 +181,6 @@ export function useRegistroPCM() {
   return {
     registro, setRegistro, actor, setActor, sesion, setSesion, plan, setPlan,
     listo, setListo, ocupado, setOcupado, sucio, setSucio, error, setError,
-    mensaje, setMensaje, claveRecuperacion, pcm, editable, cambiar, puedeCambiarPlan, mandar, actualizar
+    mensaje, setMensaje, claveRecuperacion, pcm, editable, puedeAjustarEnTaller, cambiar, puedeCambiarPlan, mandar, actualizar
   }
 }

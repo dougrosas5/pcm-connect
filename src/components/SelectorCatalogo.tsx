@@ -5,22 +5,25 @@ export default function SelectorCatalogo({
   entradas,
   valor,
   cambiar,
+  id,
   bloqueado = false
 }: {
   etiqueta: string
   entradas: EntradaCatalogo[]
   valor: string
   cambiar: (valor: string) => void
+  id?: string
   bloqueado?: boolean
 }) {
   return (
     <select
+      id={id}
       aria-label={etiqueta}
       value={valor}
       disabled={bloqueado}
       onChange={(e) => cambiar(e.target.value)}
     >
-      <option value="">Seleccionar</option>
+      <option value="">{entradas.some(e => e.activo) ? 'Seleccionar' : 'Sin opciones activas'}</option>
       {entradas
         .filter((e) => e.activo || e.id === valor)
         .map((e) => (

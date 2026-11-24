@@ -1,11 +1,118 @@
-.m2 { margin-block: 20px; }
-.m2-indicadores { display: flex; flex-wrap: wrap; gap: 16px 32px; padding-block: 16px; border-block: 1px solid var(--borde); }
-.m2-indicadores dt, .m2-datos dt { font-size: 13px; color: var(--texto-secundario-legible); }
-.m2-indicadores dd, .m2-datos dd { margin: 5px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.m2-bandeja { min-width: 1450px; }
-.m2-bandeja td { max-width: 220px; }
-.m2-editor { border-top: 1px solid var(--borde); margin-top: 20px; padding-top: 4px; }
-.m2-editor button { margin-top: 14px; }
+.m2 { margin-bottom: 20px; font-size: 13px; }
+.m2-aviso-rol { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 12px; margin-top: 12px; border: 1px solid var(--borde); border-radius: var(--radio-control); background: var(--superficie); font-size: 13px; }
+.m2-instruccion-evaluacion { margin: 0; padding: 8px 14px; color: var(--texto-secundario); font-size: 12px; line-height: 1.5; border-top: 1px solid var(--borde); }
+.m2 h2 { font-size: 17px; font-weight: 600; }
+.m2 h3 { font-size: 15px; }
+.m2 button { min-height: 34px; font-size: 13px; padding: 5px 12px; }
+.m2-cabecera-bandeja, .m2-panel-titulo, .m2-pie-evaluacion {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;
+}
+.m2 .m2-cabecera-bandeja h2, .m2-panel-titulo h3, .m2-ficha p { margin: 0; }
+.m2 .m2-indicadores { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 12px 0 4px; }
+.m2 .m2-indicadores > div {
+  display: flex; align-items: baseline; gap: 10px; min-height: 52px; padding: 10px 12px;
+  border: 1px solid var(--estado-borde, var(--borde)); border-radius: var(--radio-control);
+  background: var(--estado-fondo, var(--superficie)); color: var(--estado-texto, var(--grafito));
+}
+.m2-indicadores > [data-tono='ejecucion'] { --estado-fondo: var(--estado-ejecucion-fondo); --estado-borde: var(--estado-ejecucion-borde); --estado-texto: var(--estado-ejecucion-texto); }
+.m2-indicadores > [data-tono='pendiente'] { --estado-fondo: var(--estado-pendiente-fondo); --estado-borde: var(--estado-pendiente-borde); --estado-texto: var(--estado-pendiente-texto); }
+.m2-indicadores > [data-tono='finalizado'] { --estado-fondo: var(--estado-finalizado-fondo); --estado-borde: var(--estado-finalizado-borde); --estado-texto: var(--estado-finalizado-texto); }
+.m2-indicadores > [data-tono='aceptado'] { --estado-fondo: var(--estado-aceptado-fondo); --estado-borde: var(--estado-aceptado-borde); --estado-texto: var(--estado-aceptado-texto); }
+.m2-indicadores > [data-tono='solapamiento'] { --estado-fondo: var(--estado-solapamiento-fondo); --estado-borde: var(--estado-solapamiento-borde); --estado-texto: var(--estado-solapamiento-texto); }
+.m2-indicadores dt, .m2-datos dt { font-size: 12px; }
+.m2-indicadores dd { order: -1; font-size: 22px; line-height: 1; margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.m3 .m2-indicadores { display: flex; flex-wrap: wrap; gap: 12px 32px; padding: 16px 0; margin: 12px 0 0; border-top: 1px solid var(--borde); }
+.m3 .m2-indicadores > div { display: flex; align-items: baseline; gap: 10px; padding-right: 32px; border-right: 1px solid var(--borde); }
+.m3 .m2-indicadores > div:last-child { border-right: 0; }
+.m3 .m2-indicadores dt { color: var(--texto-secundario-legible); font-size: 13px; }
+.m3 .m2-indicadores dd { margin-top: 5px; font-size: 23px; }
+.m2-nota-indicadores { margin: 0 0 12px; font-size: 12px; }
+.m2-filtros { margin: 0 0 8px; padding: 12px 14px 8px; }
+.m2-filtros .m1-cabecera { grid-template-columns: 1fr 1.2fr 1.2fr 1fr .9fr .9fr; gap: 10px; }
+.m2-filtros .m1-campo { font-size: 12px; gap: 4px; }
+.m2-filtros input, .m2-filtros select { min-height: 34px; padding: 5px 8px; font-size: 13px; }
+.m2-pie-filtros { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
+.m2-pie-filtros .m1-nota { margin: 0; font-size: 12px; }
+.m2-resultados { font-size: 12px; color: var(--texto-secundario); margin: 8px 0; }
+.m2-bandeja { min-width: 1115px; font-size: 12px; }
+.m2-bandeja caption { padding: 8px 12px; font-size: 12px; }
+.m2-bandeja td { max-width: 160px; vertical-align: middle; line-height: 1.45; }
+.m2-bandeja thead th, .m2-tabla-evaluacion thead th { color: var(--grafito); }
+.m2-bandeja th, .m2-bandeja td { padding: 8px; }
+.m2-bandeja td:nth-child(4), .m2-bandeja td:nth-child(5) { min-width: 110px; font-variant-numeric: tabular-nums; }
+.m2-bandeja .estado, .m2-tabla-evaluacion .estado { font-size: 11px; }
+.m2-bandeja progress { display: block; width: 88px; height: 6px; margin-bottom: 4px; accent-color: var(--naval-primary); }
+.m2-bandeja td:last-child button { min-width: 75px; }
+.m2-ficha {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(275px, .47fr); gap: 16px;
+  margin-block: 12px; padding: 14px 16px; border: 1px solid var(--borde);
+  border-radius: var(--radio-panel); background: var(--superficie);
+}
+.m2-ficha-titulo { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; }
+.m2-ficha-titulo > strong { font-size: 17px; }
+.m2-ficha-titulo .icono, .m2-capacidad .icono, .m2-panel-titulo .icono { color: var(--color-azul-acero); }
+.m2-resumen-plan { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 0 0 10px; }
+.m2-resumen-plan > div { background: var(--color-superficie-hover); border: 1px solid var(--borde); border-radius: 4px; padding: 8px; }
+.m2-resumen-plan > div:nth-child(3) { background: var(--naval-celeste); }
+.m2-resumen-plan dt, .m2-capacidad .ayuda { color: var(--texto-secundario); font-size: 12px; }
+.m2-resumen-plan dd { margin: 3px 0 0; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.m2-capacidad { min-width: 0; border-left: 1px solid var(--borde); padding-inline-start: 16px; }
+.m2-capacidad h3 { margin: 0 0 4px; }
+.m2-capacidad table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+.m2-capacidad th, .m2-capacidad td { padding: 3px 4px; border-bottom: 1px solid var(--borde); text-align: left; }
+.m2-capacidad tbody th { font-weight: 400; text-transform: capitalize; }
+.m2-capacidad td { text-align: right; font-variant-numeric: tabular-nums; }
+.m2-gestionar-eta summary, .m2-historial-eta summary, .m2-historial-tareas summary { font-weight: 600; }
+.m2-editor { border-top: 1px solid var(--borde); margin-top: 12px; padding-top: 4px; }
+.m2-editor button { margin-top: 10px; }
+.m2 .m2-editor .m1-cabecera { grid-template-columns: minmax(175px, 250px) minmax(160px, 1fr); }
 .m2 button[aria-pressed='true'] { background: var(--color-azul-acero); color: var(--superficie); border-color: var(--color-azul-acero); }
-.m2 textarea { min-height: 80px; resize: vertical; }
-.m2-datos { margin-block: 20px; }
+.m2-predictiva { border-top: 1px solid var(--borde); margin-top: 12px; }
+.m2-confirmar-eta { padding: 10px; margin-top: 10px; border: 1px solid var(--estado-advertencia-borde); background: var(--estado-advertencia-fondo); }
+.m2-confirmar-eta label, .m2-confirmar-eta .m1-acciones { margin-top: 8px; }
+.m2-datos { margin-block: 16px; gap: 14px 24px; }
+.m2-datos dd { margin: 5px 0 0; font-weight: 600; font-size: 13px; }
+.m2-historial-eta { padding-block: 2px; }
+.m2-evaluacion-panel { background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-panel); }
+.m2-panel-titulo { padding: 10px 14px; background: var(--color-superficie-hover); }
+.m2-evaluacion-panel .tabla-contenedor { border-inline: 0; border-radius: 0; }
+.m2-tabla-evaluacion { min-width: 1250px; font-size: 12px; }
+.m2-tabla-evaluacion th, .m2-tabla-evaluacion td { padding: 6px 7px; border-right: 1px solid var(--borde); vertical-align: middle; }
+.m2-tabla-evaluacion th:last-child, .m2-tabla-evaluacion td:last-child { border-right: 0; }
+.m2-tabla-evaluacion .m2-grupo-pcm { background: var(--color-superficie-hover); }
+.m2-tabla-evaluacion .m2-grupo-taller { background: var(--naval-celeste); }
+.m2-tabla-evaluacion thead .m2-grupo-pcm, .m2-tabla-evaluacion thead .m2-grupo-taller { text-align: center; }
+.m2-tabla-evaluacion tbody .m2-grupo-taller { width: 65px; }
+.m2-tabla-evaluacion tbody td:nth-child(11) { min-width: 104px; }
+.m2-tabla-evaluacion tbody td:last-child { min-width: 130px; max-width: 230px; overflow-wrap: anywhere; }
+.m2-tabla-evaluacion :is(input, select, textarea) { min-height: 29px; padding: 4px 5px; font-size: 12px; }
+.m2-tabla-evaluacion textarea { resize: vertical; }
+.m2-decision[data-tono='aceptado'] { color: var(--estado-aceptado-texto); background: var(--estado-aceptado-fondo); border-color: var(--estado-aceptado-borde); }
+.m2-decision[data-tono='rechazado'] { color: var(--estado-rechazado-texto); background: var(--estado-rechazado-fondo); border-color: var(--estado-rechazado-borde); }
+.m2-decision[data-tono='pendiente'] { color: var(--estado-pendiente-texto); background: var(--estado-pendiente-fondo); border-color: var(--estado-pendiente-borde); }
+.m2-descripcion { min-width: 150px; max-width: 255px; overflow-wrap: anywhere; }
+.m2-lista-om { margin: 0; padding: 0; list-style: none; }
+.m2-lista-om li { display: flex; gap: 5px; justify-content: space-between; white-space: nowrap; }
+.m2-lista-om .m1-original { margin: 0; font-size: 11px; }
+.m2-pie-evaluacion { padding: 10px 14px; }
+.m2-pie-evaluacion .m1-nota { margin: 0; font-size: 12px; }
+.m2-historial-tareas { padding-inline: 14px; border-top: 1px solid var(--borde); }
+@media (max-width: 1200px) {
+  .m2-filtros .m1-cabecera { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .m2 .m2-indicadores { grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); }
+}
+@media (max-width: 900px) {
+  .m2-ficha { grid-template-columns: minmax(0, 1fr); }
+  .m2-capacidad { border-left: 0; border-top: 1px solid var(--borde); padding: 10px 0 0; }
+}
+@media (max-width: 760px) {
+  .m2 button, .m2 input, .m2 select, .m2-tabla-evaluacion textarea { min-height: 44px; }
+  .m2-filtros .m1-cabecera, .m2-resumen-plan { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .m2 .m2-editor .m1-cabecera { grid-template-columns: 1fr; }
+  .m2-pie-filtros { flex-wrap: wrap; }
+}
+@media (max-width: 420px) {
+  .m2-filtros .m1-cabecera { grid-template-columns: 1fr; }
+  .m2 .m2-indicadores { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .m2 .m2-indicadores > div { padding-inline: 8px; }
+}

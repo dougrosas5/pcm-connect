@@ -64,13 +64,13 @@ export function convertirFilas(filas: string[][]): ResultadoImportacion {
     }
     const anterior = tareas.get(id)
     if (anterior && JSON.stringify({ ...anterior, ordenes: [] }) !== JSON.stringify(tarea))
-      throw new Error(`Fila ${i + 2}: los datos comunes de ${id} contradicen otra fila. Corregí el archivo.`)
+      throw new Error(`Fila ${i + 2}: los datos de ${id} difieren entre filas. Usá los mismos datos de tarea para todas sus OM.`)
     const orden = { numero: om, estado: estadoOM, valor: numero(valor, i + 2, 'Valor (Gs.)') }
     const previa = anterior?.ordenes.find((o) => o.numero === om)
     if (previa) {
       if (JSON.stringify(previa) !== JSON.stringify(orden))
-        throw new Error(`Fila ${i + 2}: ${om} tiene valores o estados contradictorios.`)
-      avisos.push(`Fila ${i + 2}: ${om} repetida idéntica; se incluyó una sola vez.`)
+        throw new Error(`Fila ${i + 2}: ${om} tiene valores o estados distintos. Corregí las filas de esta OM.`)
+      avisos.push(`Fila ${i + 2}: ${om} está repetida. Se incluye una sola vez.`)
       return
     }
     if (anterior) anterior.ordenes.push(orden)
@@ -117,7 +117,7 @@ export function leerCSV(texto: string): string[][] {
 
 export async function importarArchivo(archivo: File): Promise<ResultadoImportacion> {
   if (archivo.size > 10 * 1024 * 1024)
-    throw new Error('El archivo supera 10 MB. Dividí o depurá la fuente antes de importar.')
+    throw new Error('El archivo supera 10 MB. Dividilo e importá un archivo más pequeño.')
   if (/\.csv$/iu.test(archivo.name)) return convertirFilas(leerCSV(await archivo.text()))
   if (!/\.xlsx$/iu.test(archivo.name))
     throw new Error('Seleccioná un archivo .xlsx o .csv. Convertí los archivos .xls al formato .xlsx.')

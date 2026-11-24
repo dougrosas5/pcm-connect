@@ -1,6 +1,6 @@
 # Módulo 1 — Planificación de tareas v1.3
 
-> **Actualización funcional de ETA (17/11/2026):** el [contrato definitivo de ETA](ETA.md) incorpora una Predictiva manual independiente y su confirmación explícita como Final, preservando la Inicial, el historial y las evaluaciones. Define la evolución requerida; todavía no está implementada ni autorizada para desarrollo durante la Fase 1 de diseño. El funcionamiento actual descrito a continuación se conserva.
+> **Actualización funcional de ETA (17/11/2026):** el [contrato definitivo de ETA](ETA.md) incorpora una Predictiva manual independiente y su confirmación explícita como Final, preservando la Inicial, el historial y las evaluaciones. La predicción y su confirmación se gestionan desde Validación Taller.
 
 > Guía del contrato v1.3. Para la bandeja actual, ETA y evaluación consultar [Validación Taller](VALIDACION_TALLER.md). La primera creación exige ETA. El [Módulo 3](REVISION_PCM.md) habilita evaluación por tarea, resoluciones de PCM y reevaluaciones sobre los mismos planes. La ubicación y responsabilidad del código están en [Arquitectura](ARQUITECTURA.md). Los apartados posteriores describen el alcance original v1.3; el contrato M3 actualiza sus etapas posteriores.
 

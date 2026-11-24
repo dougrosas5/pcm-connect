@@ -11,6 +11,7 @@ src/
     hooks/useRegistroPCM.ts         Estado compartido, recuperación y ejecución
   components/
     SelectorCatalogo.tsx            Selector reutilizado en cabecera y propuesta
+    Icono.tsx                      Pictogramas SVG compartidos sin dependencias
     layout/                        AppShell, Sidebar y PageHeader de presentación
   features/
     planificacion/
@@ -32,11 +33,11 @@ src/
     revision-pcm/
       components/                  Bandeja, modal y tabla de resoluciones
       model/                       Reglas de revisión y validación aditiva
-      styles/                      Modal y tabla Graphite
+      styles/                      Modal y tabla de revisión
   services/pcm/persistencia.ts      Adaptadores local/HTTP y sesión
   types/pcm.ts                     Contrato compartido de los planes vigentes
   utils/descargas.ts                Descarga de texto desde el navegador
-  styles/                          tokens.css, global.css, app.css y operaciones.css
+  styles/                          tokens.css, global.css, app.css, operaciones.css y naval.css
 server/pcm.ts                      API autenticada y adaptador Node
 api/pcm.mjs                        Función autocontenida generada para Vercel
 scripts/build-api.mjs              Empaquetado de la API
@@ -64,16 +65,16 @@ No hay carpetas para funcionalidades aún no implementadas. Las pruebas conserva
 - `services/pcm/persistencia.ts` elige el almacenamiento local o la API. El servidor importa el dominio puro, nunca este módulo con `import.meta.env` y APIs de navegador.
 - La bandeja de Taller utiliza los planes y tipos de Planificación; no mantiene otra colección.
 - Archivo local conserva su contrato independiente. No se convierten sus planes ni se unifican sus reglas históricas con el contrato vigente.
-- `legacy/RecepcionTallerV13.tsx` conserva la recepción anterior por tarea, sin conectarla a la navegación. `EvaluacionTareas.tsx` agrega los formularios de evaluación vigente dentro de la pantalla M2 actual.
+- `legacy/RecepcionTallerV13.tsx` conserva la recepción anterior por tarea, sin conectarla a la navegación. `DetalleTaller` reúne la ficha, las ETA y la disponibilidad. `EvaluacionTareas` presenta una tabla con Propuesta PCM y Ajuste Taller. `model/evaluacion.ts` aplica los borradores y el cierre sobre el registro de Planificación.
 - `revision-pcm/model/revision.ts` concentra resoluciones, confirmación, cancelación, filtros, advertencias y selectores de tareas activas/asignables. `comandos.ts` lo utiliza tanto en demo como en API; no hay otra colección de planes. El contrato está en [Revisión PCM](REVISION_PCM.md).
 
 Se usan imports relativos explícitos, compatibles con Vite, TypeScript y las pruebas Node. No se requieren aliases, un contenedor de servicios ni reexportaciones globales.
 
-## Evolución especificada del sistema de ETA
+## Sistema de ETA
 
-El [contrato definitivo de ETA](ETA.md), aprobado el 17/11/2026, define Inicial inmutable, Final operativa y Predictiva manual independiente. Guardar una predicción y confirmarla como Final son operaciones distintas, con trazabilidad diferenciada e idempotencia. Su implementación requiere autorización posterior: esta actualización no cambia tipos, comandos, servicios, UI, claves ni datos persistidos.
+El [contrato definitivo de ETA](ETA.md), aprobado el 17/11/2026, define Inicial inmutable, Final operativa y Predictiva manual independiente. Guardar una predicción y confirmarla como Final son operaciones distintas, con trazabilidad diferenciada e idempotencia. Validación Taller usa estos comandos a través del adaptador existente. Los campos predictivos son opcionales en el mismo documento persistido.
 
-Al desarrollarlo, extender el contrato compartido de tipos y validaciones de forma compatible; reutilizar las operaciones existentes de ETA, auditoría y conflictos desde ambos adaptadores, y adaptar el editor compartido con tokens Graphite Maritime. Planificación, Taller, Revisión PCM y los futuros módulos de disponibilidad, asignaciones y calendario deben consumir la misma Final operativa. No duplicar lógica entre módulos ni simular integraciones con entidades todavía inexistentes.
+Los cambios directos de ETA final y las confirmaciones de predicción comparten el registro de auditoría y la detección de conflictos. Planificación, Taller, Revisión PCM y los módulos futuros consumen la misma ETA final.
 
 ## Persistencia
 
@@ -90,7 +91,9 @@ La ubicación de los archivos fuente no cambia ninguna clave ni el formato del J
 
 ## Estilos y recursos
 
-`main.tsx` carga `styles/global.css`, que importa primero los tokens Graphite Maritime de `styles/tokens.css`; `App` carga `styles/app.css`; `EspacioPCM` carga `styles/operaciones.css`; Taller y Revisión importan sus hojas específicas. Conservar ese orden y las clases existentes para evitar cambios de cascada. Los alias históricos de color apuntan a los tokens centrales. La guía de uso y los estados semánticos están en [Diseño Graphite Maritime](DISEÑO_GRAPHITE.md). Se mantiene CSS propio, sin librerías visuales.
+`main.tsx` carga `styles/global.css`, que importa primero los tokens de `styles/tokens.css`; `App` carga `styles/app.css`; `EspacioPCM` carga `styles/operaciones.css`; Taller y Revisión importan sus hojas específicas. `main.tsx` importa después `styles/naval.css` para la nueva composición. Los alias históricos de color apuntan a los tokens centrales. La guía de uso y los estados semánticos están en [Diseño naval por referencias](DISEÑO_GRAPHITE.md). Se mantiene CSS propio, sin librerías visuales.
+
+**Actualización visual del 17/11/2026:** los tokens adoptan la identidad naval de las fotografías y `main.tsx` importa `naval.css` al final. Esta hoja adapta el shell compartido y acota el nuevo layout de M1 mediante `.planificacion-visual`; La bandeja, los filtros y el detalle de Taller se presentan con sus estilos en `validacion-taller.css`; el formulario de evaluación ya no depende de `.m3-campos`. Revisión PCM conserva su estructura. `CabeceraPlan` recibe el selector de planes como contenido de cabecera; `Importador` ofrece presentación compacta y reutiliza `HistorialImportaciones` también para usuarios de consulta. El estado, las claves y los comandos existentes permanecen intactos. `design-reference/` contiene recursos privados de diseño, excluidos de Git y Vercel; nunca se importan en el bundle ni se usan como fondo de la aplicación.
 
 El favicon utilizado permanece en `public/favicon.svg`. Los ejemplos de tareas están junto a su funcionalidad, no mezclados con los componentes ni con los datos del otro contrato.
 

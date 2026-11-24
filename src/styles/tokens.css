@@ -1,21 +1,28 @@
-/* Graphite Maritime. Las hojas de componentes consumen estos tokens,
+/* Identidad naval de las referencias visuales del 17/11/2026.
+   Las hojas de componentes consumen estos tokens,
    incluidos los alias históricos, sin repetir valores de color. */
 :root {
   color-scheme: light;
-  --color-grafito: #262a30;
-  --color-azul-acero: #385875;
-  --color-fondo: #f1f1ee;
+  --color-grafito: #243447;
+  --color-azul-acero: #1e5b94;
+  --color-fondo: #f3f5f7;
   --color-superficie: #ffffff;
   --color-terracota: #b65b47;
-  --color-texto-secundario: #626872;
-  --color-superficie-suave: #f6f7f8;
-  --color-superficie-hover: #edf1f4;
-  --color-borde: #d2d6da;
-  --color-borde-control: #858e98;
-  --color-accion-hover: #2c465e;
-  --color-sidebar-texto: #c7cdd5;
-  --color-sidebar-hover: #303b46;
-  --color-logo-acento: #e9a08b;
+  --color-texto-secundario: #526178;
+  --color-superficie-suave: #f0f3f6;
+  --color-superficie-hover: #f5f8fb;
+  --color-borde: #d5dce4;
+  --color-borde-control: #b6c2cf;
+  --color-accion-hover: #174a79;
+  --color-sidebar-texto: #ffffff;
+  --color-sidebar-hover: #173f63;
+  --color-logo-acento: #ffffff;
+  --naval-sidebar: #102f4c;
+  --naval-topbar: #123e67;
+  --naval-primary: #1e5b94;
+  --naval-celeste: #eaf1f8;
+  --naval-titulo: #243447;
+  --naval-sombra: 0 6px 18px rgb(18 47 76 / 16%);
   --color-backdrop: rgb(38 42 48 / 55%);
 
   /* Texto, fondo y borde por estado: usar siempre una etiqueta visible.
@@ -60,7 +67,7 @@
   --radio-control: 4px;
   --radio-panel: 6px;
   --alto-control: 36px;
-  --ancho-sidebar: 232px;
+  --ancho-sidebar: 184px;
   --foco: 2px solid var(--color-azul-acero);
 
   /* Compatibilidad: las clases de los módulos mantienen sus nombres. */

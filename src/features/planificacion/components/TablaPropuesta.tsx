@@ -2,6 +2,7 @@ import SelectorCatalogo from '../../../components/SelectorCatalogo'
 import { elegibles, mismaFuente, moneda, positivo, valorTotal } from '../model/modelo'
 import type { FilaPropuesta, Plan, Registro } from '../../../types/pcm'
 import { resolucionTarea, responsableOperativo } from '../../revision-pcm/model/revision'
+import Icono from '../../../components/Icono'
 
 export default function TablaPropuesta({
   plan,
@@ -25,8 +26,7 @@ export default function TablaPropuesta({
   if (!plan.filas.length)
     return (
       <p className="estado-vacio">
-        La propuesta está vacía. Importá una fuente y agregá identificadores de TAREA o PM. Solo se incorporan
-        OM con «Valor aprobado».
+        No hay tareas agregadas. Importá un archivo o buscá una tarea. Solo se incluyen OM con «Valor aprobado».
       </p>
     )
   return (
@@ -38,17 +38,16 @@ export default function TablaPropuesta({
     >
       <table className="tabla-tareas m1-tabla">
         <caption>
-          Propuesta PCM · {plan.filas.length} tareas/PM · Los valores monetarios corresponden a las OM
-          incluidas.
+          Tareas propuestas por PCM
         </caption>
         <thead>
           <tr>
             {[
-              'TAREA / PM',
+              'TAREA/PM',
               'N.º de OM',
               'Valor total (Gs.)',
               'Descripción',
-              'Tiempo (h)',
+              'Horas previstas (h)',
               'Trabajadores',
               'Criticidad',
               'Responsable',
@@ -81,16 +80,18 @@ export default function TablaPropuesta({
                 </td>
                 <td className="numero">{moneda(valorTotal(f.ordenes))}</td>
                 <td className="descripcion-trabajo">
-                  {f.descripcion || 'Completar en la fuente'}
+                  {f.descripcion || 'Sin descripción'}
                   {cambioFuente && (
                     <p className="m1-advertencia">
-                      La fuente cambió. Esta fila conserva la versión incorporada.
+                      La fuente cambió. Se conservan los datos incorporados.
                     </p>
                   )}
                 </td>
                 <td>
                   <input
                     aria-label={`Tiempo propuesto de ${f.id}`}
+                    title={`Tiempo original: ${f.tiempoOriginal ?? 'Sin definir'} h`}
+                    aria-description={`Tiempo original: ${f.tiempoOriginal ?? 'Sin definir'} h`}
                     type="number"
                     min="0"
                     step="any"
@@ -101,7 +102,7 @@ export default function TablaPropuesta({
                   />
                   <small className="m1-original">Original: {f.tiempoOriginal ?? 'Sin definir'} h</small>
                   {supera && (
-                    <p className="m1-advertencia">Supera la parada. Advertencia; no bloquea el envío.</p>
+                    <p className="m1-advertencia">Supera el tiempo de parada y no bloquea el envío.</p>
                   )}
                 </td>
                 <td>
@@ -115,7 +116,7 @@ export default function TablaPropuesta({
                     onChange={(e) => editar(f.id, { trabajadores: e.target.value })}
                   />
                 </td>
-                <td>{f.criticidad || 'Sin definir'}</td>
+                <td><span className="criticidad" data-nivel={f.criticidad.toLowerCase()}>{f.criticidad || 'Sin definir'}</span></td>
                 <td>
                   {editable ? (
                     <SelectorCatalogo
@@ -137,30 +138,30 @@ export default function TablaPropuesta({
                   <div className="m1-acciones-fila">
                     <button
                       className="boton-secundario"
-                      disabled={!editable || i === 0}
+                      disabled={!editable || plan.estado !== 'Borrador' || i === 0}
                       aria-label={`Subir ${f.id}`}
                       onClick={() => mover(i, -1)}
                     >
-                      Subir
+                      <Icono nombre="subir" /><span className="texto-accion-fila">Subir</span>
                     </button>
                     <button
                       className="boton-secundario"
-                      disabled={!editable || i === plan.filas.length - 1}
+                      disabled={!editable || plan.estado !== 'Borrador' || i === plan.filas.length - 1}
                       aria-label={`Bajar ${f.id}`}
                       onClick={() => mover(i, 1)}
                     >
-                      Bajar
+                      <Icono nombre="bajar" /><span className="texto-accion-fila">Bajar</span>
                     </button>
                     <button
                       className="boton-secundario"
-                      disabled={!editable}
+                      disabled={!editable || plan.estado !== 'Borrador'}
                       aria-label={`Quitar ${f.id}`}
                       onClick={() => cambiar({ ...plan, filas: plan.filas.filter((t) => t.id !== f.id) })}
                     >
-                      Quitar
+                      <Icono nombre="eliminar" /><span className="texto-accion-fila">Quitar</span>
                     </button>
                   </div>
-                  {cambioFuente && editable && fuente && elegibles(fuente).length > 0 && (
+                  {cambioFuente && editable && plan.estado === 'Borrador' && fuente && elegibles(fuente).length > 0 && (
                     <button
                       className="boton-secundario"
                       onClick={() => {
@@ -175,7 +176,7 @@ export default function TablaPropuesta({
                           })
                       }}
                     >
-                      Actualizar fuente de {f.id}
+                      Actualizar desde la fuente
                     </button>
                   )}
                 </td>

@@ -38,7 +38,7 @@ export function validarRegistro(valor: unknown): asserts valor is Registro {
     r.planes.some((p) => !/^PCM-\d{6,}$/u.test(p.tag) || Number(p.tag.slice(4)) > r.contador)
   )
     throw new Error(
-      'El guardado del Módulo 1 está dañado o tiene otra versión. No se sobrescribió; conservá una copia y revisalo.'
+      'El guardado está dañado o tiene un formato incompatible. Los datos originales se conservan. Descargá un respaldo.'
     )
   for (const p of r.planes) {
     validarComando({ tipo: 'guardar', plan: p, enviar: false })
@@ -47,7 +47,7 @@ export function validarRegistro(valor: unknown): asserts valor is Registro {
       !p.evaluaciones ||
       !['Borrador', 'Enviado a Taller', 'En evaluación', 'Evaluado', 'En reevaluación', 'Confirmada', 'Cancelada'].includes(p.estado)
     )
-      throw new Error('La planificación guardada está incompleta; no se modificó.')
+      throw new Error('La planificación guardada está incompleta. Los datos originales se conservan.')
   }
   for (const [catalogo, entradas] of Object.entries(r.catalogos))
     for (const entrada of entradas) validarComando({ tipo: 'catalogo', catalogo, entrada })
@@ -162,7 +162,7 @@ export async function ejecutar(
     if (actual.solicitudes[solicitud] !== undefined) return { registro: actual, actor }
     if (actual.revision !== revision)
       throw new Error(
-        'Los datos cambiaron en otra pestaña. Actualizá los datos antes de guardar; tus cambios siguen en pantalla.'
+        'Los datos cambiaron en otra pestaña. Actualizá antes de guardar. Los cambios sin guardar siguen en pantalla.'
       )
     const registro = aplicarComando(actual, comando, actor, solicitud, new Date().toISOString())
     window.localStorage.setItem(claveModulo1, JSON.stringify(registro))
@@ -171,7 +171,7 @@ export async function ejecutar(
   // Web Locks serializa las pestañas del mismo navegador. No simula una base multiusuario.
   if (!navigator.locks)
     throw new Error(
-      'El navegador no admite guardado local concurrente seguro. Usá un navegador moderno o configurá el servidor.'
+      'Este navegador no admite el guardado seguro entre pestañas. Abrí PCM Connect en un navegador compatible o usá el modo servidor.'
     )
   return navigator.locks.request(claveModulo1, cambiar)
 }

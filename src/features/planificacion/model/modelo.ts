@@ -140,16 +140,16 @@ export function agregarTareas(
   const avisos: string[] = []
   const vistos = new Set<string>()
   const ids = entrada.split(/[,;\s]+/u).filter(Boolean)
-  if (!ids.length) avisos.push('Ingresá al menos un identificador de TAREA o PM.')
+  if (!ids.length) avisos.push('Ingresá al menos un código de TAREA/PM.')
   for (const id of ids) {
     if (vistos.has(id) || filas.some((f) => f.id === id)) {
-      avisos.push(`${id}: ya está incluida; se conservaron las ediciones.`)
+      avisos.push(`${id}: ya está en la propuesta. Se conservan los cambios.`)
       continue
     }
     vistos.add(id)
     const tarea = registro.fuente.find((t) => t.id === id)
     if (!tarea) {
-      avisos.push(`${id}: no existe en la última importación.`)
+      avisos.push(`${id}: no se encontró en la última importación.`)
       continue
     }
     const ordenes = elegibles(tarea)
@@ -166,7 +166,7 @@ export function agregarTareas(
         )
     )
     if (conflicto) {
-      avisos.push(`${id}: conflicto con ${conflicto.tag}; la tarea o sus OM ya están incluidas.`)
+      avisos.push(`${id}: la tarea o una de sus OM ya figura en ${conflicto.tag}.`)
       continue
     }
     if (filas.some((f) => f.ordenes.some((om) => ordenes.some((o) => o.numero === om.numero)))) {
@@ -197,9 +197,9 @@ export function erroresEnvio(plan: Plan, registro: Registro): string[] {
     errores.push('Tiempo de parada: ingresá una duración positiva válida.')
   if (!plan.filas.length) errores.push('Agregá al menos una TAREA o PM.')
   for (const fila of plan.filas) {
-    if (!positivo(fila.tiempoPropuesto)) errores.push(`${fila.id}: el tiempo individual debe ser positivo.`)
+    if (!positivo(fila.tiempoPropuesto)) errores.push(`${fila.id}: ingresá horas previstas mayores que cero.`)
     if (!enteroPositivo(fila.trabajadores))
-      errores.push(`${fila.id}: trabajadores debe ser un entero positivo.`)
+      errores.push(`${fila.id}: ingresá una cantidad entera de trabajadores, como mínimo 1.`)
     if (!registro.catalogos.responsables.some((e) => e.id === fila.responsableId && e.activo))
       errores.push(`${fila.id}: seleccioná un responsable activo.`)
     if (

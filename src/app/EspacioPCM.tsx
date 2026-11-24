@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { agregarTareas, erroresEnvio, mostrarFecha, nuevoPlan, registroInicial } from '../features/planificacion/model/modelo'
-import type { Rol } from '../types/pcm'
+import type { Rol, TipoCatalogo } from '../types/pcm'
 import { actorDemo, cerrarSesion, conectado, iniciarSesion } from '../services/pcm/persistencia'
 import { descargarTexto } from '../utils/descargas'
 import Catalogos from '../features/catalogos/components/Catalogos'
@@ -10,13 +10,19 @@ import RevisionPCM from '../features/revision-pcm/components/RevisionPCM'
 import TablaPropuesta from '../features/planificacion/components/TablaPropuesta'
 import CabeceraPlan from '../features/planificacion/components/CabeceraPlan'
 import { useRegistroPCM } from './hooks/useRegistroPCM'
+import Icono from '../components/Icono'
+import { etiquetaPlan } from '../components/etiquetasEstado'
 import '../styles/operaciones.css'
 
-export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'catalogos' | 'revision' }) {
+export default function EspacioPCM({ vista, catalogoInicial = 'remolcadores', abrirUbicaciones }: {
+  vista: 'plan' | 'taller' | 'catalogos' | 'revision'
+  catalogoInicial?: TipoCatalogo
+  abrirUbicaciones?: () => void
+}) {
   const {
     registro, setRegistro, actor, setActor, sesion, setSesion, plan, setPlan,
     listo, setListo, ocupado, setOcupado, sucio, setSucio, error, setError,
-    mensaje, setMensaje, claveRecuperacion, pcm, editable, cambiar, puedeCambiarPlan, mandar, actualizar
+    mensaje, setMensaje, claveRecuperacion, pcm, editable, puedeAjustarEnTaller, cambiar, puedeCambiarPlan, mandar, actualizar
   } = useRegistroPCM()
   const [entrada, setEntrada] = useState('')
   const [avisos, setAvisos] = useState<string[]>([])
@@ -33,19 +39,19 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
         }
 
   return (
-    <div className="m1">
+    <div className={`m1 ${vista === 'plan' ? 'espacio-plan-naval' : ''}`}>
       {!conectado ? (
-        <div className="m1-modo">
-          <strong>Modo demo local</strong>
+        <details className="m1-modo sesion-naval">
+          <summary><Icono nombre="usuario" /><span>{actor.rol} <small>· Local</small></span><Icono nombre="bajar" /></summary>
+          <strong>Modo local</strong>
           <p>
-            Guardado en este navegador, sin autenticación ni seguridad real. No se comparte entre equipos.
-            Configurá el servidor para trabajar con persistencia multiusuario.
+            Los datos quedan en este navegador. Los roles son simulados, sin autenticación ni seguridad real.
           </p>
           <label>
-            Rol simulado (demo)
+            Rol simulado
             <select
               value={actor.rol}
-              disabled={ocupado || sucio}
+              disabled={ocupado}
               onChange={(e) =>
                 setActor({ ...actor, rol: e.target.value as Rol, nombre: `${e.target.value} demo` })
               }
@@ -55,8 +61,8 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
               ))}
             </select>
           </label>
-          {sucio && <small>Guardá o limpiá la propuesta antes de cambiar de rol.</small>}
-        </div>
+          {sucio && <small>Los cambios pendientes de Planificación se conservan al cambiar de rol. Volvé a PCM para guardarlos.</small>}
+        </details>
       ) : (
         <div className="m1-modo">
           <strong>Servidor · {listo ? `${actor.nombre} · ${actor.rol}` : 'Inicio de sesión'}</strong>
@@ -76,7 +82,7 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
                   setMensaje(
                     remoto
                       ? 'Sesión cerrada.'
-                      : 'Sesión cerrada en este navegador. No se pudo confirmar la revocación remota.'
+                      : 'La sesión se cerró en este navegador. No se pudo confirmar el cierre en el servidor.'
                   )
                   setError('')
                 } catch (err) {
@@ -171,16 +177,18 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
       {!listo && sesion && !error && <p>Cargando planificaciones…</p>}
       {listo && (
         <>
-          <div className="m1-barra">
+          <div className="m1-barra" hidden={vista === 'plan' || vista === 'taller'}>
             <button className="boton-secundario" disabled={ocupado} onClick={actualizar}>
               Actualizar datos
             </button>
             <span className="ayuda">
-              {conectado ? 'Persistencia en servidor' : 'Persistencia local de demo'} · {actor.rol}
+              {conectado ? 'Conectado al servidor' : 'Modo local'} · {actor.rol}
             </span>
           </div>
           {vista === 'catalogos' && (
             <Catalogos
+              key={catalogoInicial}
+              tipoInicial={catalogoInicial}
               catalogos={registro.catalogos}
               administrar={actor.rol === 'Administrador'}
               ocupado={ocupado}
@@ -195,10 +203,12 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
               cambiosPCM={sucio}
               ocupado={ocupado}
               ejecutar={mandar}
+              actualizar={actualizar}
+              usarRolTaller={!conectado && !sucio ? () => setActor({ ...actor, rol: 'Taller', nombre: 'Taller demo' }) : undefined}
             />
           )}
-          <div hidden={vista !== 'plan'}>
-            <div className="selector-planificaciones">
+          <div className="planificacion-visual" hidden={vista !== 'plan'}>
+            <CabeceraPlan plan={plan} catalogos={catalogos} editable={editable} cambiar={cambiar} abrirUbicaciones={abrirUbicaciones} selector={<div className="selector-planificaciones">
               <label className="m1-campo consulta-planificaciones">
                 Abrir planificación guardada
                 <select
@@ -214,10 +224,10 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
                     }
                   }}
                 >
-                  <option value="">Nueva propuesta sin guardar</option>
+                  <option value="">Sin planificación guardada</option>
                   {registro.planes.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.tag} · {p.estado} · {p.planificador}
+                      {p.tag} · {etiquetaPlan[p.estado]}
                     </option>
                   ))}
                 </select>
@@ -238,24 +248,17 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
               >
                 Nueva planificación
               </button>
-            </div>
-            <CabeceraPlan plan={plan} catalogos={catalogos} editable={editable} cambiar={cambiar} />
-            <Importador registro={registro} permitido={pcm} ocupado={ocupado} ejecutar={mandar} />
-            <section aria-labelledby="propuesta-v13">
-              <div className="m1-encabezado">
-                <h2 id="propuesta-v13">Tareas propuestas</h2>
-                <span className="ayuda">
-                  {sucio
-                    ? 'Cambios sin guardar · copia de recuperación local'
-                    : plan.tag
-                      ? 'Propuesta guardada'
-                      : 'Nueva propuesta'}
-                </span>
+            </div>} />
+            <section className="propuesta-naval" aria-labelledby="propuesta-v13">
+              <div className="propuesta-naval-titulo">
+                <h2 id="propuesta-v13"><Icono nombre="herramientas" />Tareas propuestas</h2>
+                <Importador registro={registro} permitido={pcm} ocupado={ocupado} ejecutar={mandar} compacto />
               </div>
               {plan.estado !== 'Borrador' && (
                 <p className="m1-nota">
-                  Propuesta enviada: solo consulta. Los cambios de la fuente y catálogos no reemplazan esta
-                  versión.
+                  {puedeAjustarEnTaller
+                    ? 'Podés ajustar horas, trabajadores y responsable. Taller deberá reevaluar las tareas modificadas.'
+                    : 'Solo consulta. Se conservan los datos de la versión enviada.'}
                 </p>
               )}
               <form
@@ -267,18 +270,27 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
                   if (resultado.plan.filas.length !== plan.filas.length) cambiar(resultado.plan)
                 }}
               >
-                <label htmlFor="m1-busqueda">TAREA / PM</label>
+                <label htmlFor="m1-busqueda">Buscar TAREA/PM</label>
+                <div className="campo-busqueda-naval"><Icono nombre="buscar" />
                 <textarea
                   id="m1-busqueda"
                   value={entrada}
                   disabled={!editable}
-                  placeholder="Pegá identificadores separados por comas, espacios o saltos de línea"
+                  placeholder="Ej.: PM-204, TAREA-1001"
+                  title="Separá los códigos con comas, espacios o saltos de línea."
                   rows={2}
+                  aria-label="TAREA/PM"
                   onChange={(e) => setEntrada(e.target.value)}
                 />
-                <button className="boton-secundario" disabled={!editable}>
+                </div>
+                <button className="boton-primario" disabled={!editable}>
+                  <Icono nombre="mas" />
                   Agregar tareas
                 </button>
+                <span className="estado-propuesta ayuda">
+                  {sucio ? 'Cambios sin guardar' : plan.tag ? 'Guardada' : 'Sin guardar'}
+                  {' · '}{plan.filas.length} {plan.filas.length === 1 ? 'tarea' : 'tareas'}
+                </span>
               </form>
               {!!avisos.length && (
                 <ul className="m1-nota" aria-live="polite">
@@ -287,22 +299,25 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
                   ))}
                 </ul>
               )}
-              <TablaPropuesta plan={plan} registro={registro} editable={editable} cambiar={cambiar} />
-              <p className="m1-nota">
-                Taller definirá posteriormente la secuencia, la duración del conjunto y la asignación de
-                técnicos concretos. Tiempo y trabajadores representan una propuesta individual por tarea.
-              </p>
+              <TablaPropuesta plan={plan} registro={registro} editable={editable || puedeAjustarEnTaller} cambiar={cambiar} />
               <div className="m1-pie-acciones">
+              <p className="nota-planificacion">
+                <Icono nombre="informacion" /><span>
+                Las horas y la cantidad de trabajadores se proponen por tarea.
+                </span>
+              </p>
+              <div className="acciones-envio-naval">
                 <button className="boton-secundario" disabled={!editable} onClick={() => setLimpiando(true)}>
                   Limpiar
                 </button>
                 <div className="m1-acciones">
                   <button
                     className="boton-secundario"
-                    disabled={!editable}
+                    disabled={!editable && (!puedeAjustarEnTaller || !sucio)}
                     onClick={() => mandar({ tipo: 'guardar', plan, enviar: false })}
                   >
-                    Guardar borrador
+                    <Icono nombre="guardar" />
+                    {puedeAjustarEnTaller ? 'Guardar ajustes' : 'Guardar borrador'}
                   </button>
                   <button
                     className="boton-primario"
@@ -316,15 +331,16 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
                       void mandar({ tipo: 'guardar', plan, enviar: true })
                     }}
                   >
+                    <Icono nombre="enviar" />
                     Enviar a Taller
                   </button>
                 </div>
               </div>
+              </div>
               {limpiando && (
                 <div className="m1-confirmacion" role="group" aria-label="Confirmar limpieza">
                   <p>
-                    ¿Limpiar la propuesta en pantalla? Se inicia una nueva propuesta vacía. El borrador
-                    guardado, el historial y los datos fuente se conservan.
+                    ¿Abrir una propuesta vacía? Se descartarán los cambios sin guardar. El borrador guardado, la fuente y el historial se conservan.
                   </p>
                   <div className="m1-acciones">
                     <button className="boton-secundario" onClick={() => setLimpiando(false)}>
@@ -365,7 +381,7 @@ export default function EspacioPCM({ vista }: { vista: 'plan' | 'taller' | 'cata
               ))}
             </ol>
             {!registro.historial.length && (
-              <p>Los cambios guardados se registrarán aquí con usuario y fecha.</p>
+              <p>Sin cambios registrados.</p>
             )}
           </details>
         </>

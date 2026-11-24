@@ -1,6 +1,6 @@
 # PCM Connect — alcance acordado
 
-> **Sistema definitivo de ETA (17/11/2026):** [Contrato de ETA Inicial, Final y Predictiva](ETA.md). La Predictiva es manual e independiente; únicamente **Confirmar ETA predictiva**, con autorización, confirmación explícita y motivo, la copia a la Final y activa auditoría, revisión operativa y alertas sin alterar la Inicial ni las tareas aceptadas. Sustituye toda definición anterior que deje pendiente su lógica. Especificación aprobada; implementación pendiente de autorización, fuera de la Fase 1 de diseño.
+> **Sistema definitivo de ETA (17/11/2026):** [Contrato de ETA Inicial, Final y Predictiva](ETA.md). La Predictiva es manual e independiente; únicamente **Confirmar ETA predictiva**, con autorización, confirmación explícita y motivo, la copia a la Final y activa auditoría, revisión operativa y alertas sin alterar la Inicial ni las tareas aceptadas. Sustituye toda definición anterior que deje pendiente su lógica. Disponible en Validación Taller para Planificador, Administrador y Supervisor Taller.
 
 > **Decisiones definitivas del Módulo 3 (12/11/2026):** [Revisión y Confirmación PCM](REVISION_PCM.md) sustituye las definiciones pendientes anteriores: Taller evalúa la TAREA/PM completa; PCM puede tercerizar, eliminar lógicamente o corregir y reenviar una rechazada. Confirmación y cancelación conservan trazabilidad. ETA inicial inmutable; conflictos de ETA final permiten confirmar con reconocimiento y mantienen advertencias. Las reglas por OM siguientes pertenecen únicamente al Archivo local histórico.
 
@@ -66,7 +66,7 @@ No equiparar estado de PCM Connect con cierre oficial de OM en el ERP externo.
 
 ## Decisiones pendientes que no se deben adivinar
 
-La relación entre ETA Inicial, Final y Predictiva ya está definida en [Sistema de ETA](ETA.md); no es una decisión pendiente. El desarrollo de esa lógica sigue sujeto a autorización expresa.
+La relación entre ETA Inicial, Final y Predictiva está definida en [Sistema de ETA](ETA.md). La agenda de arribos se abordará por separado.
 
 - Forma en que los tres encargados se identifican/autentican en producción. En demo, roles simulados claramente marcados.
 - Cuándo comienza/termina el cómputo de una jornada, turnos y reglas laborales de horas.

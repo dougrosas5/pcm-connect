@@ -9,7 +9,7 @@ import { enviarATaller, permisos, preparacionEditable, revisionDe, rolesDemo, ta
 import type { Actor, RolDemo } from '../model/validacionTaller'
 
 const datosVacios: DatosGenerales = { remolcador: '', fechaParada: '', horasParada: '' }
-const mensajeLectura = 'No se pudieron leer las planificaciones locales. Los datos guardados no se modificaron. Revisá el almacenamiento del navegador y recargá para volver a intentar.'
+const mensajeLectura = 'No se pudieron leer las planificaciones locales. Se conservan los datos guardados. Revisá el almacenamiento del navegador y recargá.'
 
 function cargarRegistro() {
   try {
@@ -76,7 +76,7 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
       setErrorGuardado('')
       return true
     } catch {
-      setErrorGuardado('No se pudo guardar el cambio. No se aplicó ni se asignó un nuevo número. Revisá el espacio y los permisos de almacenamiento del navegador y volvé a intentar.')
+      setErrorGuardado('No se guardaron los cambios ni se asignó un número. Revisá el espacio y los permisos de almacenamiento del navegador.')
       return false
     }
   }
@@ -98,9 +98,9 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
   return (
     <>
       <div className="rol-demo">
-        <label htmlFor="rol-demo">Rol simulado (demo)</label>
+        <label htmlFor="rol-demo">Rol simulado</label>
         <select id="rol-demo" value={rol} onChange={event => setRol(event.target.value as RolDemo)}>{rolesDemo.map(nombre => <option key={nombre}>{nombre}</option>)}</select>
-        <p className="ayuda">Simulación local sin autenticación ni seguridad real. Los encargados no tienen permiso de evaluación.</p>
+        <p className="ayuda">Roles simulados, sin autenticación ni seguridad real. Los encargados no pueden evaluar.</p>
       </div>
       {errorGuardado && <p className="aviso-guardado" role="alert">{errorGuardado}</p>}
       {vistaTaller && <ValidacionTaller registro={registro} actor={actor} guardar={guardar} bloqueado={bloqueado} />}
@@ -109,7 +109,7 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
         <div className="consulta-planificaciones">
           <label htmlFor="planificacion-guardada">Consultar planificación</label>
           <select id="planificacion-guardada" value={creando ? '' : registro.activa ?? ''} disabled={bloqueado || registro.planificaciones.length === 0} onChange={event => abrir(event.target.value)}>
-            <option value="" disabled>{registro.planificaciones.length === 0 ? 'Todavía no hay planificaciones creadas' : 'Seleccionar planificación guardada'}</option>
+            <option value="" disabled>{registro.planificaciones.length === 0 ? 'No hay planificaciones guardadas' : 'Seleccionar planificación guardada'}</option>
             {registro.planificaciones.map(item => (
               <option key={item.codigo} value={item.codigo}>Planificación {item.numero} · {item.codigo} · {item.remolcador} · {mostrarFecha(item.fechaParada)}</option>
             ))}
@@ -122,11 +122,11 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
           setMensaje('')
         }}>Nueva planificación</button>
       </div>
-      <p className="nota-demo">Demo · Remolcadores y tareas ficticios. Guardado local en este navegador; no se comparte entre equipos ni reemplaza una base de datos para varios usuarios.</p>
+      <p className="nota-demo">Remolcadores y tareas ficticios. Los cambios quedan guardados en este navegador.</p>
       <p className="estado-guardado" role="status">{mensaje}</p>
 
       <section className="datos-planificacion" aria-labelledby="titulo-datos-planificacion">
-        <h2 id="titulo-datos-planificacion">Datos generales de la planificación</h2>
+        <h2 id="titulo-datos-planificacion">Datos de la planificación</h2>
         {creando ? (
           <form noValidate onSubmit={event => {
             event.preventDefault()
@@ -134,11 +134,11 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
             if (Object.values(errores).some(Boolean)) return
             if (guardar(actual => crearPlanificacion(actual, datos, actor))) {
               setCreando(false)
-              setMensaje('Planificación creada. Los cambios en sus tareas y OM se guardan automáticamente en este navegador.')
+              setMensaje('Planificación creada. Los cambios en tareas y OM se guardan automáticamente.')
             }
           }}>
             <fieldset disabled={bloqueado || !permisos(actor).organizar}>
-              <legend className="ayuda">Nueva planificación · Completá los tres campos obligatorios.</legend>
+              <legend className="ayuda">Datos obligatorios</legend>
               <div className="campos-planificacion">
                 <div>
                   <label htmlFor="remolcador">Remolcador</label>
@@ -180,7 +180,7 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
       </section>
 
       {!creando && plan && <>
-        <p className="ayuda">{preparacionEditable(plan, actor) ? 'Preparación editable por PCM. Los cambios en datos evaluados requieren reevaluación de las OM afectadas.' : 'Preparación en solo lectura para este rol o etapa. Consultá los resultados y las correcciones autorizadas en Validación Taller.'}</p>
+        <p className="ayuda">{preparacionEditable(plan, actor) ? 'Preparación editable por PCM. Los cambios en datos evaluados requieren reevaluación de las OM afectadas.' : 'Solo consulta. Revisá las evaluaciones en Validación Taller.'}</p>
         {(plan.estado === 'Borrador' || plan.estado === 'En revisión') && <button type="button" className="boton-primario" disabled={bloqueado || !permisos(actor).organizar} onClick={() => {
           if (guardar(actual => enviarATaller(actual, plan.codigo, actor))) setMensaje(`${plan.codigo} enviada a Taller. Abrí Validación Taller para evaluarla.`)
         }}>{plan.estado === 'En revisión' ? 'Reenviar a Taller' : 'Enviar a Taller'}</button>}
@@ -189,7 +189,7 @@ export default function Planificaciones({ vistaTaller = false }: { vistaTaller?:
       {/* Sin cabecera aún: se conserva el flujo previo y se incorpora al crear. */}
       {(!creando || !plan) && (
         <section aria-label={plan ? `Tareas y OM de ${plan.codigo}` : 'Tareas y OM sin planificación'}>
-          {!plan && <p className="ayuda">Podés preparar tareas antes de crear la planificación. Se guardan como borrador sin número y se incorporan al crearla.</p>}
+          {!plan && <p className="ayuda">Las tareas se guardan sin número hasta que crees la planificación.</p>}
           <fieldset className="area-tareas" disabled={bloqueado || !permisos(actor).organizar || Boolean(plan && !preparacionEditable(plan, actor))}>
             <BusquedaTareas key={plan?.codigo ?? 'sin-planificacion'} preparacion={preparacion} onChange={cambiarPreparacion}
               puedeEditarTarea={tarea => !plan || tareaEditable(plan, tarea, actor)}

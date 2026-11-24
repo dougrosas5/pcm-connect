@@ -66,12 +66,11 @@ export default function BusquedaTareas({ preparacion, onChange, puedeEditarTarea
 
   return (
     <>
-      <p className="introduccion-tareas">Buscá tareas y prepará sus órdenes de mantenimiento abiertas.</p>
-      <p className="nota-demo">Demo · Tareas ficticias y costos estimados en guaraníes (Gs.) basados en referencias públicas; no son cotizaciones. Sin conexión a sistemas corporativos. Los cambios se guardan localmente al editar.</p>
+      <p className="nota-demo">Tareas ficticias y costos de referencia en guaraníes (Gs.). Guardado local automático.</p>
       <form className="busqueda" onSubmit={event => {
         event.preventDefault()
         const resultado = buscarTareas(entrada, tareasDemo, filas)
-        onChange({ filas: resultado.filas, avisos: resultado.avisos, resumen: `Búsqueda completada: ${resultado.agregadas} OM agregadas. Total: ${resultado.filas.length}.` })
+        onChange({ filas: resultado.filas, avisos: resultado.avisos, resumen: `OM agregadas: ${resultado.agregadas}. Total en la propuesta: ${resultado.filas.length}.` })
       }}>
         <div className="entrada-busqueda">
           <label htmlFor="numeros-tarea">Números de tarea</label>
@@ -102,13 +101,13 @@ export default function BusquedaTareas({ preparacion, onChange, puedeEditarTarea
       </div>
       <p id="ayuda-tabla" className="ayuda">Una fila por tarea con sus OM abiertas. Duración prevista, responsable y personas comunes a la tarea; el costo suma sus OM. La duración no equivale a horas-persona ni a horas reales.</p>
       {filas.length === 0 ? (
-        <div className="estado-vacio">Todavía no hay OM en la tabla. Buscá 1001 para comenzar; los avisos explican las tareas excluidas.</div>
+        <div className="estado-vacio">No hay OM agregadas. Buscá una tarea para incorporarlas.</div>
       ) : (
         <>
           <p className="ayuda">{pendientes > 0 ? `${pendientes} tareas con datos por completar o corregir.` : 'Todas las tareas tienen duración, responsable y cantidad de personas válidos.'}</p>
           <div className="tabla-contenedor" role="region" aria-label="Órdenes de mantenimiento; desplazamiento horizontal" tabIndex={0}>
             <table className="tabla-tareas" aria-describedby="ayuda-tabla">
-              <caption>Preparación de tareas · una fila por tarea</caption>
+              <caption>Preparación de tareas</caption>
               <thead><tr>
                 {['N.º tarea', 'N.º OM', 'Descripción de la tarea', 'Duración prevista (h)', 'Criticidad', 'Costo estimado (Gs.)', 'Estado', 'Responsable', 'Personas'].map(columna => <th scope="col" key={columna}>{columna}</th>)}
               </tr></thead>

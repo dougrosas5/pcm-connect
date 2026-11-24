@@ -53,7 +53,7 @@ export function erroresConfirmacion(plan: Plan): string[] {
   const errores: string[] = []
   if (plan.estado !== 'Evaluado') errores.push('Taller debe finalizar la evaluación vigente antes de confirmar.')
   if (plan.revisionPCM && plan.revisionPCM.versionEvaluada !== plan.revisionPCM.versionContenido)
-    errores.push('Hay tareas pendientes de reevaluación de la versión actual.')
+    errores.push('Hay tareas pendientes de reevaluación. Taller debe evaluarlas antes de confirmar.')
   if (!/^PCM-\d{6,}$/u.test(plan.tag)) errores.push('El TAG no es válido.')
   if (!etaValida(plan.eta) || !finParada(plan)) errores.push('La ETA final o el tiempo de parada no es válido.')
   if (!plan.filas.some((f) => tareaActiva(plan, f))) errores.push('Debe existir al menos una tarea activa.')
@@ -85,7 +85,7 @@ export function filtrarRevision(planes: Plan[], filtros: FiltrosRevision, histor
   if (filtros.desde && filtros.hasta && filtros.desde > filtros.hasta) return []
   return planes.filter((p) => {
     const dia = inputDesdeEta(p.eta).slice(0, 10)
-    const recibida = ['Evaluado', 'En reevaluación', 'Confirmada', 'Cancelada'].includes(p.estado) || (p.revisionPCM?.versionContenido ?? 1) > 1
+    const recibida = ['Evaluado', 'En reevaluación', 'Confirmada', 'Cancelada'].includes(p.estado)
     return recibida && cerradaPCM(p) === historial &&
       p.tag.toLowerCase().includes(filtros.tag.trim().toLowerCase()) &&
       (!filtros.remolcador || p.remolcadorId === filtros.remolcador) &&
@@ -118,7 +118,10 @@ export function registrarConflictos(registro: Registro, plan: Plan, actor: Actor
   }
   const inicio = Date.parse(plan.eta), fin = Date.parse(finParada(plan))
   for (const fila of plan.filas.filter((f) => tareaInterna(plan, f))) {
-    const horas = evaluacionVigente(plan, fila.id)?.tiempoAceptado ?? fila.tiempoPropuesto
+    const evaluacion = evaluacionVigente(plan, fila.id)
+    const borrador = plan.borradorTaller?.find(a => a.tareaId === fila.id && a.versionTarea === revision.tareas[fila.id].version)
+    const horas = evaluacion?.resultado === 'Aceptada' ? evaluacion.tiempoAceptado ?? fila.tiempoPropuesto
+      : borrador?.resultado === 'Aceptada' ? borrador.horas : fila.tiempoPropuesto
     if (Number(horas) > Number(plan.horasParada)) agregar(fila.id, `${fila.id}: duración de ${horas} h mayor que la parada de ${plan.horasParada} h.`)
     for (const otro of registro.planes) {
       if (otro.id === plan.id || ['Cancelada', 'Borrador'].includes(otro.estado)) continue
@@ -178,7 +181,7 @@ export function aplicarRevision(registro: Registro, comando: Extract<Comando, { 
     const errores = erroresConfirmacion(plan)
     if (errores.length) throw new Error(errores.join('\n'))
     const conflictos = conflictosPendientes(plan)
-    if (conflictos.length && !comando.reconocerConflictos) throw new Error('Reconocé explícitamente los conflictos pendientes de reprogramación.')
+    if (conflictos.length && !comando.reconocerConflictos) throw new Error('Marcá la casilla de conflictos para confirmar con reprogramación pendiente.')
     for (const c of conflictos) c.reconocimiento = firma(actor, fecha)
     if (conflictos.length) registro.historial.push({ ...firma(actor, fecha), accion: 'Reconocer alertas', entidad: plan.tag, planId: plan.id, anterior: null, nuevo: structuredClone(conflictos) })
     plan.estado = 'Confirmada'
